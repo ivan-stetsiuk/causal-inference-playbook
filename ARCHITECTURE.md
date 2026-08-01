@@ -271,6 +271,21 @@ never reach the site. A pre-commit hook catches this.
 6. ✅ Chapter template and the reference chapter `01-introduction.qmd`
 7. ✅ First OJS explorable — T3 verified end to end
 8. ✅ Retention layer: `export_anki.py`, `glossary.qmd`, `recall.qmd`
-9. ⬜ `.github/workflows/publish.yml`, enable GitHub Pages, first deploy
+9. ✅ `.github/workflows/publish.yml`, GitHub Pages enabled, first deploy live
 
-Once these are done, adding chapters becomes purely content work.
+Adding chapters is now purely content work.
+
+### Enabling Pages (one-time, already done)
+
+`actions/deploy-pages` fails with a bare `404 Not Found` when Pages has never
+been enabled for the repository — the error names the cause only in its final
+line. Pushing the workflow file is not enough; the repository has to be told
+that Actions is the publishing source:
+
+```bash
+gh api -X POST repos/ivan-stetsiuk/causal-inference-playbook/pages \
+  -f build_type=workflow
+```
+
+The equivalent in the UI is Settings → Pages → Build and deployment →
+Source: GitHub Actions.

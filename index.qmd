@@ -1,0 +1,82 @@
+---
+title: "Causal Inference Playbook"
+subtitle: "Interactive notes: prose, code that checks the math, and explorables"
+toc: false
+---
+
+Notes on [Causal Inference for the Brave and
+True](https://matheusfacure.github.io/python-causality-handbook/) plus
+supplementary sources, written while working through the material.
+
+The goal is not to restate the textbook but to **retain** it. So every chapter
+ends not with conclusions but with a check: a simulation where the true effect
+is known in advance, and an estimator that has to recover it.
+
+## How a chapter works
+
+Every chapter follows the same seven steps. The order is deliberate: intuition
+before formalism, code before the explorable, own words last.
+
+| Step | What happens |
+|---|---|
+| 1 | **The question** — what problem the chapter solves, in one sentence |
+| 2 | **Intuition** — before any math |
+| 3 | **Formalism** — the estimand and the assumptions it needs |
+| 4 | **Verify with code** — a simulation with known ground truth |
+| 5 | **Explorable** — break an assumption with a slider, watch the bias appear |
+| 6 | **When it breaks** — failure modes and diagnostics |
+| 7 | **In my own words** — a summary written without looking back |
+
+Step 4 carries the weight. In real data the counterfactual is never observed,
+so there is nothing to check an estimator against. In a simulation it *is*
+observed, because we defined both potential outcomes ourselves. If the
+estimator returns the effect we planted, the estimator is understood. If it
+does not, we have learned exactly what we do not understand.
+
+## Three kinds of interactivity
+
+Interactivity on this site comes in three grades, and they differ in cost:
+
+::: {.grid}
+
+::: {.g-col-12 .g-col-md-4}
+### Baked charts
+
+Heavy analysis runs at build time in real Python and R, and reaches the page
+as finished interactive Plotly. Hovering and zooming are instant; the
+parameters are fixed.
+:::
+
+::: {.g-col-12 .g-col-md-4}
+### Live code
+
+Cells in the [lab](labs/index.qmd) execute in the browser through
+WebAssembly. The code can be edited and re-run with no server involved. The
+first run pays a few seconds to boot the engine.
+:::
+
+::: {.g-col-12 .g-col-md-4}
+### Explorables
+
+[Sliders and charts](explorables/index.qmd) in plain JavaScript. They respond
+with no delay — and intuition about a parameter only forms when the response
+is immediate.
+:::
+
+:::
+
+## Where to start
+
+- [Chapter 1. Introduction to causality](notes/01-introduction.qmd) — potential
+  outcomes, the fundamental problem, selection bias
+- [Bias from confounding](explorables/confounding-bias.qmd) — an explorable:
+  add a confounder with a slider and watch truth and the naive estimate separate
+- [Glossary](glossary.qmd) — terms cross-linked to each other
+- [Review](recall.qmd) — every card in the playbook, with an Anki export
+
+## How this is built
+
+Quarto plus GitHub Pages. Cell output is cached in `_freeze/` and committed, so
+CI runs neither Python nor R — it only assembles HTML from finished results.
+The reasoning behind each decision is in
+[ARCHITECTURE.md](https://github.com/ivan-stetsiuk/causal-inference-playbook/blob/main/ARCHITECTURE.md).

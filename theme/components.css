@@ -1,0 +1,276 @@
+/* Playbook components.
+ *
+ * Hand-written, but contains no hex values: everything goes through
+ * var(--viz-*) from the generated tokens.css. That is why one file serves
+ * both themes — the values are switched by the class on <body>. */
+
+/* ---------- Rhythm ---------- */
+
+:root {
+  --pb-radius: 8px;
+  --pb-gap: 1.25rem;
+  --pb-rule: 3px;
+}
+
+.quarto-title-block .quarto-title .title {
+  letter-spacing: -0.02em;
+}
+
+/* ---------- .recall — a fact worth retaining ---------- */
+/* Visually a card rather than a callout: it also lands in Anki and on the
+   review page, so it has to read as a self-contained unit. */
+
+div.recall {
+  position: relative;
+  margin: var(--pb-gap) 0;
+  padding: 1rem 1.1rem 1rem 1.5rem;
+  border-radius: var(--pb-radius);
+  border: 1px solid var(--viz-border);
+  border-left: var(--pb-rule) solid var(--viz-series-1);
+  background: color-mix(in srgb, var(--viz-series-1) 5%, transparent);
+}
+
+div.recall::before {
+  content: "Remember";
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--viz-series-1);
+}
+
+div.recall > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- .assumption — a named assumption ---------- */
+/* Assumptions are cross-referenced between chapters, so each one has a name
+   and the name is always visible. */
+
+div.assumption {
+  margin: var(--pb-gap) 0;
+  padding: 1rem 1.1rem;
+  border-radius: var(--pb-radius);
+  border: 1px solid var(--viz-border);
+  border-left: var(--pb-rule) solid var(--viz-series-7);
+  background: color-mix(in srgb, var(--viz-series-7) 5%, transparent);
+}
+
+div.assumption > .assumption-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--viz-ink);
+}
+
+div.assumption > .assumption-name::before {
+  content: "Assumption";
+  flex: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--viz-series-7);
+}
+
+div.assumption > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- .quiz — self-check ---------- */
+/* The answer is hidden on purpose: attempting recall before looking is the
+   retention mechanism. Easy to open, but it takes a deliberate act. */
+
+details.quiz {
+  margin: var(--pb-gap) 0;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--pb-radius);
+  border: 1px solid var(--viz-border);
+  border-left: var(--pb-rule) solid var(--viz-series-4);
+  background: color-mix(in srgb, var(--viz-series-4) 6%, transparent);
+}
+
+details.quiz > summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--viz-ink);
+  list-style: none;
+}
+
+details.quiz > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.quiz > summary::before {
+  content: "Check yourself — ";
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--viz-series-4);
+}
+
+details.quiz[open] > summary {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--viz-border);
+}
+
+details.quiz > :last-child {
+  margin-bottom: 0;
+}
+
+/* ---------- Glossary terms ---------- */
+
+a.term {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--viz-ink-muted);
+  cursor: help;
+}
+
+a.term:hover {
+  color: var(--viz-series-1);
+  border-bottom-color: var(--viz-series-1);
+}
+
+/* ---------- Chapter template steps ---------- */
+/* Numbered steps show the reader where they are, and show me when I have
+   skipped a step. */
+
+.chapter-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6em;
+  height: 1.6em;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--viz-series-1);
+  color: var(--viz-surface);
+  font-size: 0.62em;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* ---------- Charts ---------- */
+/* Transparent plot background plus a surface from the page: this is what lets
+   Plotly survive a theme toggle (see theme/plotly-theme-sync.js). */
+
+.cell-output-display > div:has(> .js-plotly-plot),
+figure > div:has(> .js-plotly-plot) {
+  padding: 0.5rem;
+  border-radius: var(--pb-radius);
+  background: var(--viz-surface);
+  border: 1px solid var(--viz-border);
+}
+
+.js-plotly-plot .modebar {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.js-plotly-plot:hover .modebar {
+  opacity: 1;
+}
+
+/* ---------- OJS explorables ---------- */
+/* Controls sit in one row above the chart — inputs are separated from data
+   rather than scattered between it. */
+
+.explorable {
+  margin: var(--pb-gap) 0;
+  border-radius: var(--pb-radius);
+  border: 1px solid var(--viz-border);
+  background: var(--viz-surface);
+  overflow: hidden;
+}
+
+.explorable > .controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: flex-end;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--viz-border);
+  background: color-mix(in srgb, var(--viz-ink) 3%, transparent);
+}
+
+.explorable > .plot {
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+.explorable form {
+  font-family: var(--viz-font-sans);
+  font-size: 0.85rem;
+  color: var(--viz-ink-2);
+}
+
+/* Readout strip: the numbers a slider is actually driving. */
+.explorable .readout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.75rem;
+  padding: 0.75rem 1.1rem;
+  border-top: 1px solid var(--viz-border);
+  font-variant-numeric: tabular-nums;
+}
+
+.explorable .readout .stat-label {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--viz-ink-muted);
+}
+
+.explorable .readout .stat-value {
+  font-size: 1.35rem;
+  font-weight: 650;
+  color: var(--viz-ink);
+}
+
+/* ---------- Tables ---------- */
+
+.cell-output-display table {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+}
+
+/* Wide output scrolls inside its own box; the page never scrolls sideways. */
+.cell-output-display {
+  overflow-x: auto;
+}
+
+/* ---------- quarto-live WASM cells ---------- */
+
+.quarto-live-cell {
+  margin: var(--pb-gap) 0;
+  border-radius: var(--pb-radius);
+  overflow: hidden;
+}
+
+/* ---------- Print and forced colors ---------- */
+/* The texture/label channel: in print and forced-colors mode, identity can no
+   longer rest on color. */
+
+@media print, (forced-colors: active) {
+  div.recall,
+  div.assumption,
+  details.quiz {
+    border: 1px solid CanvasText;
+    background: none;
+  }
+
+  /* In print the answer must be visible — a hidden answer makes the page
+     useless on paper. */
+  details.quiz > .quiz-answer {
+    display: block !important;
+  }
+}

@@ -1,0 +1,128 @@
+---
+title: "Engine Check"
+subtitle: "Verify that Python and R both execute in the browser"
+categories: [lab, setup]
+format: live-html
+pyodide:
+  packages:
+    - numpy
+    - pandas
+webr:
+  packages:
+    - stats
+engine: markdown
+toc: true
+---
+
+This page exists to prove tier T2 works end to end. Both engines below boot in
+your browser; nothing is computed on a server.
+
+Every cell is editable. Change a number, press **Run**, and see what happens —
+that is the entire reason this tier exists.
+
+## Python (Pyodide)
+
+The same data generating process as `pylib/dgp.py`, written out in full so you
+can edit it. It plants a known effect and then checks whether a naive
+difference in means recovers it.
+
+```{pyodide}
+#| autorun: true
+#| min-lines: 18
+import numpy as np
+import pandas as pd
+
+def confounded(n=2000, ate=2.0, confounding=3.0, seed=7):
+    """x drives both the probability of treatment and the outcome."""
+    rng = np.random.default_rng(seed)
+    x = rng.normal(0, 1, n)
+    p = 1 / (1 + np.exp(-confounding * x))
+    t = rng.binomial(1, p)
+    y0 = 10 + confounding * x + rng.normal(0, 1, n)
+    y1 = y0 + ate
+    y = np.where(t == 1, y1, y0)
+    return pd.DataFrame({"x": x, "t": t, "y0": y0, "y1": y1, "y": y})
+
+df = confounded(confounding=3.0)
+
+true_ate = (df["y1"] - df["y0"]).mean()
+naive = df.loc[df["t"] == 1, "y"].mean() - df.loc[df["t"] == 0, "y"].mean()
+
+print(f"True ATE:         {true_ate:.3f}")
+print(f"Naive difference: {naive:.3f}")
+print(f"Bias:             {naive - true_ate:+.3f}")
+```
+
+::: {.callout-tip appearance="simple"}
+Set `confounding=0.0` and run it again. The bias collapses to sampling noise,
+because at zero the design is a randomized experiment.
+:::
+
+## Python — check the decomposition yourself
+
+Chapter 1 claims that the naive difference equals ATT plus selection bias.
+That is an identity, so it should hold exactly, not approximately.
+
+```{pyodide}
+#| min-lines: 12
+treated = df[df["t"] == 1]
+control = df[df["t"] == 0]
+
+att = (treated["y1"] - treated["y0"]).mean()
+selection_bias = treated["y0"].mean() - control["y0"].mean()
+naive = treated["y"].mean() - control["y"].mean()
+
+print(f"ATT:            {att:.6f}")
+print(f"Selection bias: {selection_bias:.6f}")
+print(f"Sum:            {att + selection_bias:.6f}")
+print(f"Naive:          {naive:.6f}")
+print(f"Difference:     {abs(att + selection_bias - naive):.2e}")
+```
+
+The residual should be at floating-point noise level. If it is not, the
+identity has been misstated — which is exactly the kind of error this tier is
+here to catch.
+
+## R (WebR)
+
+The same check in R, to confirm the second engine is alive.
+
+```{webr}
+#| autorun: true
+#| min-lines: 16
+set.seed(7)
+n <- 2000
+confounding <- 3.0
+ate <- 2.0
+
+x  <- rnorm(n)
+p  <- 1 / (1 + exp(-confounding * x))
+t  <- rbinom(n, 1, p)
+y0 <- 10 + confounding * x + rnorm(n)
+y1 <- y0 + ate
+y  <- ifelse(t == 1, y1, y0)
+
+true_ate <- mean(y1 - y0)
+naive    <- mean(y[t == 1]) - mean(y[t == 0])
+
+cat(sprintf("True ATE:         %.3f\n", true_ate))
+cat(sprintf("Naive difference: %.3f\n", naive))
+cat(sprintf("Bias:             %+.3f\n", naive - true_ate))
+```
+
+## Your turn
+
+An empty cell. The `df` from the first Python block is still in scope.
+
+```{pyodide}
+#| min-lines: 6
+# Try: does controlling for x fix the bias here?
+# Hint: compare naive difference against the within-stratum average.
+```
+
+::: {.recall}
+Browser-side execution is not a lesser version of running code locally — it
+removes the setup step entirely. But its package set is limited to pure-Python
+and wasm-built wheels, so anything with compiled extensions still belongs in
+the build-time tier.
+:::

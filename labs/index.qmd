@@ -1,0 +1,35 @@
+---
+title: "Lab"
+subtitle: "Editable cells that run Python and R in your browser"
+listing:
+  contents: "*.qmd"
+  exclude:
+    filename: "index.qmd"
+  type: grid
+  fields: [title, subtitle, categories]
+  sort: "title"
+  categories: true
+toc: false
+---
+
+The lab is tier T2: real Python and R executing inside the browser through
+WebAssembly. Nothing is sent to a server, because there is no server — the
+whole site is static files.
+
+The point of this tier is not speed but **agency**. A chapter can assert that
+a naive difference is biased; a lab cell lets you change the numbers and watch
+it happen. Every cell is editable and re-runnable.
+
+The cost is an engine boot of roughly 5–15 seconds the first time a page needs
+Python or R. After that, execution is fast.
+
+::: {.callout-note appearance="simple"}
+## What runs here and what does not
+
+Available in the browser: `numpy`, `pandas`, `scipy`, `statsmodels`,
+`matplotlib`, `plotly`, `scikit-learn`, and a wasm-built subset of CRAN.
+
+Not available: `econml`, `dowhy`, and anything else relying on compiled
+extensions. Those live in the chapters' build-time charts, where a real
+interpreter does the work.
+:::

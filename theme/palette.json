@@ -1,0 +1,86 @@
+{
+  "_source_of_truth": "The only file in this repo containing hex values. Read by: scripts/build_tokens.py -> theme/tokens.css + tokens.js + _tokens-*.scss (site), py/viz.py (Plotly Python), R/viz.R (Plotly R), and OJS explorables via FileAttachment. Change colors HERE and nowhere else.",
+  "_validated": "dataviz validate_palette.js. Core roles (control/treated/counterfactual) --pairs all: light CVD dE 9.2, normal 24.0; dark CVD dE 9.4, normal 20.9. Full 8 slots --pairs adjacent: light CVD 9.1, normal 19.6; dark CVD 8.4, normal 19.3. All checks PASS.",
+
+  "series": {
+    "light": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"],
+    "dark":  ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
+  },
+
+  "_semantic_note": "The three core causal roles take slots 0-2 — exactly the slots that clear the strict all-pairs CVD check. Slot order is a legibility mechanism, not decoration. Color follows the entity and is never reassigned when the series count changes.",
+  "semantic": {
+    "control":        { "slot": 0, "label": "Control",        "dash": "solid" },
+    "treated":        { "slot": 1, "label": "Treated",        "dash": "solid" },
+    "counterfactual": { "slot": 2, "label": "Counterfactual", "dash": "dash"  },
+    "estimate":       { "slot": 0, "label": "Estimate",       "dash": "solid" },
+    "naive":          { "slot": 7, "label": "Naive estimate", "dash": "dot"   },
+    "bias":           { "slot": 6, "label": "Bias",           "dash": "solid" }
+  },
+  "_slot_choice_note": "naive and bias deliberately avoid slots 2-4, which fall below 3:1 on the light surface. Both roles carry meaning on their own in single-series charts where no legend or direct label is present, so they need contrast rather than relief.",
+
+  "_reference_note": "Ground truth in a simulation is a reference line, not a data series. It is drawn in chrome ink rather than a series color — otherwise the truth competes with the estimates for attention.",
+  "reference": {
+    "light": { "truth": "#52514e", "zero": "#c3c2b7" },
+    "dark":  { "truth": "#c3c2b7", "zero": "#383835" }
+  },
+
+  "sequential": {
+    "hue": "blue",
+    "steps": {
+      "100": "#cde2fb", "150": "#b7d3f6", "200": "#9ec5f4", "250": "#86b6ef",
+      "300": "#6da7ec", "350": "#5598e7", "400": "#3987e5", "450": "#2a78d6",
+      "500": "#256abf", "550": "#1c5cab", "600": "#184f95", "650": "#104281",
+      "700": "#0d366b"
+    },
+    "_ordinal_bounds": "For a discrete ordinal ramp the step nearest the surface must still clear 2:1: on light start no lighter than step 250, on dark go no darker than step 600.",
+    "ordinal_min_light": "250",
+    "ordinal_max_dark": "600"
+  },
+
+  "diverging": {
+    "_note": "Polarity: bias up/down, effect positive/negative. Warm and cool poles with a NEUTRAL GRAY midpoint. The midpoint is never a hue.",
+    "negative": { "light": "#2a78d6", "dark": "#3987e5" },
+    "midpoint": { "light": "#f0efec", "dark": "#383835" },
+    "positive": { "light": "#e34948", "dark": "#e66767" }
+  },
+
+  "status": {
+    "_note": "Reserved. Never reused as 'series 4'. Always shipped with an icon and a label so color never carries the meaning alone.",
+    "good":     "#0ca30c",
+    "warning":  "#fab219",
+    "serious":  "#ec835a",
+    "critical": "#d03b3b"
+  },
+
+  "chrome": {
+    "light": {
+      "surface":   "#fcfcfb",
+      "page":      "#f9f9f7",
+      "ink":       "#0b0b0b",
+      "ink-2":     "#52514e",
+      "ink-muted": "#898781",
+      "grid":      "#e1e0d9",
+      "axis":      "#c3c2b7",
+      "border":    "rgba(11,11,11,0.10)",
+      "success":   "#006300"
+    },
+    "dark": {
+      "surface":   "#1a1a19",
+      "page":      "#0d0d0d",
+      "ink":       "#ffffff",
+      "ink-2":     "#c3c2b7",
+      "ink-muted": "#898781",
+      "grid":      "#2c2c2a",
+      "axis":      "#383835",
+      "border":    "rgba(255,255,255,0.10)",
+      "success":   "#0ca30c"
+    }
+  },
+
+  "_relief_note": "On the light surface slot 2 (aqua, 2.74:1), slot 3 (yellow, 2.11:1) and slot 4 (magenta, 2.62:1) fall below 3:1. This is an obligation rather than a ban: those series ship with a visible direct label or a table view. Counterfactual (slot 2) already carries both a dash pattern and a label.",
+
+  "typography": {
+    "sans": "system-ui, -apple-system, 'Segoe UI', sans-serif",
+    "mono": "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace"
+  }
+}

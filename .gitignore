@@ -1,0 +1,35 @@
+# Rendered site — rebuilt by CI from _freeze/, never committed.
+/_site/
+/.quarto/
+
+# Generated theme files. These are derived from theme/palette.json by
+# scripts/build_tokens.py in the pre-render step, so committing them would
+# only create merge conflicts.
+theme/tokens.css
+theme/tokens.js
+theme/_scripts.html
+theme/_tokens-light.scss
+theme/_tokens-dark.scss
+
+# NOTE: _freeze/ is deliberately NOT ignored. Committing cached cell output is
+# what lets CI render without running Python or R. See ARCHITECTURE.md §7.
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+env/
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# OS / editor
+.DS_Store
+*.swp
+.vscode/settings.json
+
+**/*.quarto_ipynb

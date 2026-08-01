@@ -1,0 +1,146 @@
+project:
+  type: website
+  output-dir: _site
+  # Only .qmd becomes a site page. Without this, README.md and ARCHITECTURE.md
+  # would be published as pages, and the {{< term >}} examples documented
+  # inside them would be evaluated as real shortcodes.
+  render:
+    - "**/*.qmd"
+  # palette.json -> tokens.css / tokens.js / _scripts.html / _tokens-*.scss.
+  # Runs before every render, so site colors, Plotly and OJS cannot drift.
+  pre-render:
+    - python3 scripts/build_tokens.py
+  # Anki deck is rebuilt from the .qmd sources after the site is written.
+  post-render:
+    - python3 scripts/export_anki.py
+
+website:
+  title: "Causal Inference Playbook"
+  description: "Interactive notes on causal inference: prose, code that checks the math, and explorables"
+  site-url: https://ivan-stetsiuk.github.io/causal-inference-playbook
+  repo-url: https://github.com/ivan-stetsiuk/causal-inference-playbook
+  repo-actions: [edit, source, issue]
+  page-navigation: true
+  back-to-top-navigation: true
+  reader-mode: true
+
+  navbar:
+    left:
+      - text: "Notes"
+        href: notes/01-introduction.qmd
+      - text: "Explorables"
+        href: explorables/index.qmd
+      - text: "Lab"
+        href: labs/index.qmd
+      - text: "Glossary"
+        href: glossary.qmd
+      - text: "Review"
+        href: recall.qmd
+    right:
+      - icon: github
+        href: https://github.com/ivan-stetsiuk/causal-inference-playbook
+        aria-label: "GitHub repository"
+
+  sidebar:
+    style: floating
+    collapse-level: 2
+    contents:
+      - text: "Home"
+        href: index.qmd
+      - section: "Notes"
+        contents:
+          - notes/01-introduction.qmd
+      - section: "Explorables"
+        contents:
+          - explorables/index.qmd
+          - explorables/confounding-bias.qmd
+      - section: "Lab"
+        contents:
+          - labs/index.qmd
+          - labs/wasm-check.qmd
+      - section: "Retention"
+        contents:
+          - glossary.qmd
+          - recall.qmd
+
+  search:
+    location: sidebar
+    type: textbox
+    copy-button: true
+
+  page-footer:
+    left: "Notes on [Causal Inference for the Brave and True](https://matheusfacure.github.io/python-causality-handbook/)"
+    right: "Built with [Quarto](https://quarto.org)"
+
+format:
+  html:
+    theme:
+      # _tokens-*.scss are generated from the palette; *.scss are hand-written.
+      light: [cosmo, theme/_tokens-light.scss, theme/light.scss]
+      dark: [darkly, theme/_tokens-dark.scss, theme/dark.scss]
+    # tokens.css is generated; components.css is hand-written and references
+    # variables only, so one file serves both themes.
+    css:
+      - theme/tokens.css
+      - theme/components.css
+    # Palette plus the Plotly theme-sync script, inlined — see build_tokens.py.
+    include-after-body: theme/_scripts.html
+    toc: true
+    toc-depth: 3
+    toc-title: "On this page"
+    number-sections: false
+    smooth-scroll: true
+    anchor-sections: true
+    code-copy: true
+    code-overflow: wrap
+    code-tools:
+      source: true
+      toggle: false
+    highlight-style: github
+    # KaTeX is faster than MathJax and covers causal-inference notation.
+    html-math-method: katex
+    # Display math in causal inference runs wide. A default-width body forces
+    # long identities to scroll, which breaks reading them as one statement.
+    grid:
+      sidebar-width: 260px
+      body-width: 860px
+      margin-width: 240px
+      gutter-width: 1.5rem
+    fig-align: center
+    fig-responsive: true
+    tbl-cap-location: bottom
+    link-external-newwindow: true
+    citations-hover: true
+    footnotes-hover: true
+
+# Pin the kernel. Left to itself Quarto picks the first registered kernelspec,
+# which on this machine is a leftover from an unrelated project pointing at a
+# deleted virtualenv.
+jupyter: python3
+
+execute:
+  # The key to the whole deploy: cell output is cached in _freeze/ and
+  # committed, so CI runs neither Python nor R. See ARCHITECTURE.md §7.
+  freeze: auto
+  warning: false
+  message: false
+  echo: true
+
+filters:
+  - playbook
+
+# The glossary is merged into document metadata, which is where the
+# {{< term >}} shortcode reads it from — no YAML parsing in Lua.
+metadata-files:
+  - _glossary.yml
+
+bibliography: references.bib
+csl: https://www.zotero.org/styles/apa
+
+lang: en
+
+editor:
+  # Notion-like editing: VS Code opens .qmd straight into visual mode.
+  render-on-save: true
+  markdown:
+    wrap: sentence

@@ -1,0 +1,313 @@
+---
+title: "Chapter 1. Introduction to Causality"
+subtitle: "Potential outcomes, the fundamental problem, and selection bias"
+date: 2026-08-01
+categories: [foundations, potential outcomes, bias]
+jupyter: python3
+---
+
+```{python}
+#| label: setup
+#| echo: false
+
+import sys
+from pathlib import Path
+
+# Helpers live at the repo root; chapters live in notes/.
+sys.path.insert(0, str(Path.cwd().parent))
+
+import numpy as np
+import pandas as pd
+
+from pylib.dgp import (
+    confounded,
+    decompose,
+    naive_diff,
+    randomized_trial,
+    true_ate,
+    true_att,
+)
+from pylib.viz import C, apply_theme, go, px, truth_line
+```
+
+## [1]{.chapter-step} The question {#sec-question}
+
+How do you measure the effect of a treatment when there is nothing to compare
+against — you cannot both give someone a drug and withhold it?
+
+## [2]{.chapter-step} Intuition {#sec-intuition}
+
+Hospitals are full of sick people. Does that mean hospitals damage your health?
+
+The question sounds silly, but its structure is exactly that of most business
+questions. Users who installed the app spend more — does the app increase
+revenue? Employees who took the training perform better — is that the
+training, or is it that strong performers get sent to training?
+
+The problem is the same every time: **the groups differed before any treatment
+happened**. Comparing their outcomes adds the treatment effect to that
+pre-existing gap, and nothing in the comparison separates the two.
+
+This forces a shift in how the question is posed. The right question is not
+"how do the treated differ from the untreated". The right question is "what
+would have happened to **these same** people had they not been treated".
+
+The second question is about data we do not have. That is why causal inference
+is a discipline about recovering missing data, rather than about describing
+the data in hand.
+
+## [3]{.chapter-step} Formalism {#sec-formalism}
+
+### Potential outcomes
+
+Every unit $i$ has **two** outcomes defined:
+
+$$
+\begin{aligned}
+Y_i(0) &\quad \text{what would happen without treatment} \\
+Y_i(1) &\quad \text{what would happen with it}
+\end{aligned}
+$$
+
+The causal effect for that unit is $\tau_i = Y_i(1) - Y_i(0)$.
+
+We observe only one of the two, depending on the realized assignment
+$T_i \in \{0, 1\}$:
+
+$$
+Y_i = T_i \cdot Y_i(1) + (1 - T_i) \cdot Y_i(0).
+$$
+
+::: {.recall}
+The observed outcome is a **collapse** of the potential-outcome pair. The other
+half — the {{< term counterfactual >}} — is not merely unknown, it is
+unobservable in principle. This is the [fundamental problem of causal
+inference](/glossary.qmd#term-fundamental-problem).
+:::
+
+### What can actually be estimated
+
+The individual effect $\tau_i$ is never available. Averages are:
+
+$$
+\begin{aligned}
+\text{ATE} &= E[Y(1) - Y(0)] \\
+\text{ATT} &= E[Y(1) - Y(0) \mid T = 1] \\
+\text{CATE}(x) &= E[Y(1) - Y(0) \mid X = x]
+\end{aligned}
+$$
+
+{{< term ate >}} answers "what happens if we treat everyone".
+{{< term att >}} answers "what did treatment do for those who got it". Under a
+heterogeneous effect these are different numbers, and substituting one for the
+other is not a rounding error.
+
+### Where the bias comes from
+
+The naive difference in means decomposes into two parts. This identity is the
+center of the chapter:
+
+$$
+\begin{aligned}
+\underbrace{E[Y \mid T=1] - E[Y \mid T=0]}_{\text{what we computed}}
+&= \underbrace{E[Y(1) - Y(0) \mid T=1]}_{\text{ATT — what we wanted}} \\[0.6em]
+&\quad + \underbrace{E[Y(0) \mid T=1] - E[Y(0) \mid T=0]}_{\text{selection bias}}
+\end{aligned}
+$$
+
+The second term is how much the groups would have differed **with no treatment
+at all**. It is unobservable, because it is made of counterfactuals.
+
+::: {.recall}
+Naive difference = ATT + {{< term selection-bias >}}. Selection bias is not
+noise and not sampling error: it does not shrink as the sample grows. More
+data makes a wrong answer more precise, not more correct.
+:::
+
+### What has to be assumed
+
+::: {.assumption name="Ignorability"}
+$$(Y(0), Y(1)) \perp T \mid X$$
+
+Within each level of the covariates $X$, treatment is as good as randomly
+assigned. In a {{< term rct >}} this holds by construction, because a coin does
+the assigning. In observational data it is an untestable assumption: the data
+can neither confirm nor refute it, only subject-matter knowledge can argue for
+it.
+:::
+
+::: {.assumption name="Positivity"}
+$$0 < P(T = 1 \mid X = x) < 1 \quad \text{for all } x$$
+
+Every unit has a nonzero chance of landing in either group. If at some $x$
+everyone is treated or nobody is, there is no counterfactual available there —
+and no method repairs that.
+:::
+
+::: {.assumption name="SUTVA"}
+A unit's outcome does not depend on what was assigned to other units, and the
+treatment exists in a single version. Violated by network effects and by
+marketplaces, where units compete for a shared resource.
+:::
+
+## [4]{.chapter-step} Verify with code {#sec-verification}
+
+Let us check the identity from step 3 on a simulation where the truth is known
+by construction. Two datasets with the **same** true effect $\tau = 2$: in the
+first, assignment is random; in the second, a confounder drives it.
+
+```{python}
+#| label: simulate
+
+TRUE_ATE = 2.0
+
+rct = randomized_trial(n=4000, ate=TRUE_ATE, seed=7)
+obs = confounded(n=4000, ate=TRUE_ATE, confounding=3.0, seed=7)
+
+pd.DataFrame(
+    {
+        "design": ["Randomized", "Confounded"],
+        "true ATE": [true_ate(rct), true_ate(obs)],
+        "true ATT": [true_att(rct), true_att(obs)],
+        "naive difference": [naive_diff(rct), naive_diff(obs)],
+        "bias": [naive_diff(rct) - true_ate(rct), naive_diff(obs) - true_ate(obs)],
+    }
+).round(3)
+```
+
+The true effect is 2 in both designs. The naive difference recovers it in the
+first and lands near 6 in the second — three times the truth, with the bias
+term alone twice the size of the real effect. The difference is not in the data
+and not in the sample size; it is entirely in the **assignment mechanism**.
+
+Let us see where the bias came from. The confounder $x$ pushes both the
+probability of treatment and the outcome itself, so the groups separate along
+$x$ before treatment has done anything at all.
+
+```{python}
+#| label: fig-confounding
+#| fig-cap: "The confounder pulls the groups apart along x. The vertical gap between the clouds is the effect and the bias added together, and no amount of looking separates them."
+
+obs_plot = obs.assign(group=np.where(obs["t"] == 1, "Treated", "Control"))
+
+fig = px.scatter(
+    obs_plot,
+    x="x",
+    y="y",
+    color="group",
+    opacity=0.45,
+    # Plotly switches to WebGL above ~1000 points on its own. SVG keeps the
+    # chart working without a GPU and keeps it recolorable on theme toggle.
+    render_mode="svg",
+    color_discrete_map={"Control": C.control, "Treated": C.treated},
+    labels={"x": "Confounder x", "y": "Observed outcome y"},
+)
+fig.update_traces(marker=dict(size=5, line=dict(width=0)))
+apply_theme(fig)
+fig.update_layout(height=420)
+fig
+```
+
+Now the same thing in terms of the identity. Split the naive difference into
+ATT and selection bias — in a simulation both parts are computable, because
+the potential outcomes are known.
+
+```{python}
+#| label: fig-decomposition
+#| fig-cap: "Decomposition of the naive difference. Under randomization the selection-bias segment is zero by construction, so the naive estimate lands on the truth."
+
+parts = {"Randomized": decompose(rct), "Confounded": decompose(obs)}
+designs = list(parts)
+
+fig = go.Figure()
+fig.add_bar(
+    name="ATT — the causal effect",
+    x=designs,
+    y=[parts[d]["att"] for d in designs],
+    marker_color=C.treated,
+)
+fig.add_bar(
+    name="Selection bias",
+    x=designs,
+    y=[parts[d]["bias"] for d in designs],
+    marker_color=C.bias,
+)
+fig.update_layout(
+    barmode="relative",
+    height=400,
+    yaxis_title="Contribution to the naive difference",
+)
+truth_line(fig, y=TRUE_ATE, label="True ATE = 2")
+apply_theme(fig)
+fig
+```
+
+The segments add up to exactly the naive difference. In the randomized design
+the second segment is degenerate — the coin knows nothing about the potential
+outcomes, so $E[Y(0) \mid T=1] = E[Y(0) \mid T=0]$.
+
+::: {.quiz question="The sample grows from 4,000 to 400,000 observations. What happens to the bias in the second design?"}
+Nothing. Selection bias is a property of the **assignment mechanism**, not of
+the sample size. Only precision improves: the confidence interval tightens
+around the very same wrong number.
+
+This is what separates bias from random error, and it is why "we have millions
+of rows" is not an argument in a causal question.
+:::
+
+## [5]{.chapter-step} Explorable {#sec-explorable}
+
+The table above shows two points: confounding present, confounding absent. The
+interesting part is the whole transition between them.
+
+→ [**Bias from confounding**](/explorables/confounding-bias.qmd) — move a
+slider to vary the confounder's strength from zero and watch the truth and the
+naive estimate separate. At zero the design degenerates into a randomized
+experiment.
+
+## [6]{.chapter-step} When it breaks {#sec-failure}
+
+| What happens | Why it hurts | Signal in the data |
+|---|---|---|
+| The driver of selection is unobserved | Controlling for covariates cannot help — there is nothing to control | None. The data looks fine |
+| Positivity is violated | At some $x$ there is no counterfactual at all | Propensity estimates pile up near 0 or 1 |
+| SUTVA is violated | The control group is contaminated by the treatment | Network structure, shared resource, marketplace |
+| Effect is heterogeneous but ATE is reported | The number is right, the decision is wrong | ATT diverges noticeably from ATE |
+| Controlling for a collider | Adding a control **creates** bias | The estimate moves when a "sensible" variable is added |
+
+The last row is the treacherous one. The instinct that "more controls cannot
+hurt" is wrong: controlling for a variable that is a consequence of both
+treatment and outcome opens a path that did not exist. Covered in the chapter
+on DAGs.
+
+::: {.quiz question="Why not simply put every available variable into the regression?"}
+Because variables come in kinds that must be handled differently.
+Controlling for a {{< term confounder >}} removes bias; controlling for a
+collider creates it. The data cannot tell them apart — only an assumed causal
+structure can.
+
+The consequence: choosing controls is a decision made **before** looking at
+the data, on the basis of subject-matter knowledge.
+:::
+
+## [7]{.chapter-step} In my own words {#sec-summary}
+
+Causal inference starts by admitting the necessary data does not exist and
+never will. Every unit has two potential outcomes, exactly one is observed, so
+the individual effect is unavailable in principle.
+
+Averages rescue us — but only if we know how treatment was assigned. A naive
+difference in means always equals the real effect plus selection bias.
+Randomization zeroes the second term by construction, and that single property
+is its entire value.
+
+Everything else in the course is a way to zero out selection bias where
+randomization is impossible. Each method buys that with an assumption the data
+cannot check.
+
+::: {.recall}
+Methods of causal inference differ less in their mathematics than in **which
+untestable assumption** they demand in exchange for randomization. Judge a
+method by how plausible its assumption is in the problem at hand, not by how
+sophisticated its machinery looks.
+:::

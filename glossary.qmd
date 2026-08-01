@@ -1,0 +1,46 @@
+---
+title: "Glossary"
+subtitle: "Causal inference terms, cross-linked to each other"
+toc: false
+jupyter: python3
+---
+
+This page is generated from `_glossary.yml` — the same file the
+`{{{< term key >}}}` shortcode reads for hover definitions in the chapters. A
+definition lives in one place, so there is nowhere for it to drift.
+
+```{python}
+#| echo: false
+#| output: asis
+
+from pathlib import Path
+
+import yaml
+from IPython.display import Markdown, display
+
+data = yaml.safe_load(Path("_glossary.yml").read_text(encoding="utf-8"))
+entries = data["glossary"]
+
+# Alphabetical by the visible term rather than by key: readers scan labels.
+for key, e in sorted(entries.items(), key=lambda kv: kv[1].get("term", kv[0]).lower()):
+    out = [f'### {e.get("term", key)} {{#term-{key}}}\n']
+    if e.get("short"):
+        out.append(f'*{e["short"]}*\n')
+    if e.get("def"):
+        out.append(e["def"].strip() + "\n")
+    if e.get("see"):
+        links = ", ".join(
+            f'[{entries.get(k, {}).get("term", k)}](#term-{k})' for k in e["see"]
+        )
+        out.append(f"\nSee also: {links}\n")
+    display(Markdown("\n".join(out)))
+```
+
+---
+
+::: {.callout-note appearance="simple"}
+Missing a term? Add an entry to `_glossary.yml` and it appears here and in
+hover tooltips across the site. A link to a key that does not exist still
+renders, but drops a warning in the build log — a reminder to write the
+definition, not a build failure.
+:::

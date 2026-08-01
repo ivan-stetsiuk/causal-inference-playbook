@@ -1,0 +1,61 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; let an in-flight run finish rather than cancelling it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.10.18
+
+      # Python is needed only for the pre-render and post-render scripts
+      # (build_tokens.py, export_anki.py), both of which are standard library
+      # only. Chapter cells are NOT executed here — their output comes from
+      # the committed _freeze/ cache. See ARCHITECTURE.md §7.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify the freeze cache is present
+        # Without _freeze/ the render would silently produce pages with no
+        # figures, which is far worse than failing loudly here.
+        run: |
+          if [ ! -d _freeze ]; then
+            echo "::error::_freeze/ is missing. Run 'quarto render' locally and commit it."
+            exit 1
+          fi
+          echo "Freeze cache found: $(find _freeze -name '*.json' | wc -l) cached documents"
+
+      - name: Render site
+        run: quarto render
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

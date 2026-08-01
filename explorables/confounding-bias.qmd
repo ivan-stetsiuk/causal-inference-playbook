@@ -1,0 +1,244 @@
+---
+title: "Bias from Confounding"
+subtitle: "Turn the confounder up from zero and watch truth and estimate separate"
+categories: [explorable, bias, confounding]
+---
+
+[Chapter 1](/notes/01-introduction.qmd) shows two points: confounding present,
+confounding absent. The interesting part is the transition between them.
+
+At strength 0 the design **is** a randomized experiment — the confounder does
+nothing, and the naive difference in means lands on the truth. Push the slider
+and the estimate walks away from a truth that never moved.
+
+```{ojs}
+//| echo: false
+
+// Same palette as the build-time charts and the site CSS.
+palette = FileAttachment("../theme/palette.json").json()
+
+// Explorables render client-side, so unlike baked charts they can simply
+// react to the theme instead of being recolored after the fact.
+mode = Generators.observe((notify) => {
+  const read = () =>
+    notify(document.body.classList.contains("quarto-dark") ? "dark" : "light");
+  read();
+  const obs = new MutationObserver(read);
+  obs.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  return () => obs.disconnect();
+})
+
+colors = ({
+  control: palette.series[mode][palette.semantic.control.slot],
+  treated: palette.series[mode][palette.semantic.treated.slot],
+  naive: palette.series[mode][palette.semantic.naive.slot],
+  truth: palette.reference[mode].truth,
+  ink: palette.chrome[mode].ink,
+  ink2: palette.chrome[mode]["ink-2"],
+  muted: palette.chrome[mode]["ink-muted"],
+  grid: palette.chrome[mode].grid,
+  surface: palette.chrome[mode].surface
+})
+```
+
+```{ojs}
+//| echo: false
+
+// Deterministic RNG so a given slider position always yields the same
+// picture — a chart that reshuffles on every redraw teaches nothing.
+function makeRng(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+// Box-Muller, standard normal.
+function makeNormal(rng) {
+  return () => {
+    const u = Math.max(rng(), 1e-12);
+    const v = rng();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  };
+}
+
+// The JS mirror of pylib/dgp.py confounded(): x drives both the probability of
+// treatment and the outcome.
+function simulate({ n, confounding, ate, seed = 42, baseline = 10, noise = 1 }) {
+  const rng = makeRng(seed);
+  const normal = makeNormal(rng);
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    const x = normal();
+    const p = 1 / (1 + Math.exp(-confounding * x));
+    const t = rng() < p ? 1 : 0;
+    const y0 = baseline + confounding * x + noise * normal();
+    const y1 = y0 + ate;
+    rows.push({ x, t, y0, y1, y: t === 1 ? y1 : y0, group: t === 1 ? "Treated" : "Control" });
+  }
+  return rows;
+}
+
+function naiveDiff(rows) {
+  const t = rows.filter((r) => r.t === 1);
+  const c = rows.filter((r) => r.t === 0);
+  if (!t.length || !c.length) return NaN;
+  return d3.mean(t, (r) => r.y) - d3.mean(c, (r) => r.y);
+}
+```
+
+```{ojs}
+//| echo: false
+
+viewof confounding = Inputs.range([0, 4], {
+  value: 1.5, step: 0.1, label: "Confounder strength"
+})
+
+viewof sampleSize = Inputs.range([200, 5000], {
+  value: 1500, step: 100, label: "Sample size"
+})
+
+viewof trueAte = Inputs.range([0, 5], {
+  value: 2, step: 0.25, label: "True ATE"
+})
+```
+
+```{ojs}
+//| echo: false
+
+data = simulate({ n: sampleSize, confounding, ate: trueAte })
+estimate = naiveDiff(data)
+bias = estimate - trueAte
+
+// Bias across the whole slider range, so the current position reads as a
+// point on a curve rather than an isolated number.
+biasCurve = d3.range(0, 4.05, 0.1).map((c) => {
+  const rows = simulate({ n: 1500, confounding: c, ate: trueAte });
+  return { confounding: c, estimate: naiveDiff(rows) };
+})
+```
+
+```{ojs}
+//| echo: false
+
+scatter = Plot.plot({
+  width: 700,
+  height: 340,
+  marginLeft: 48,
+  marginBottom: 40,
+  style: { background: "transparent", color: colors.ink2, fontSize: "12px" },
+  x: { label: "Confounder x →", grid: true },
+  y: { label: "↑ Observed outcome y", grid: true },
+  color: {
+    domain: ["Control", "Treated"],
+    range: [colors.control, colors.treated],
+    legend: true
+  },
+  marks: [
+    Plot.dot(data, {
+      x: "x",
+      y: "y",
+      fill: "group",
+      fillOpacity: 0.4,
+      r: 2.4,
+      tip: true,
+      title: (d) =>
+        `${d.group}\nx = ${d.x.toFixed(2)}\ny = ${d.y.toFixed(2)}`
+    }),
+    Plot.ruleY([0], { stroke: colors.grid })
+  ]
+})
+
+biasPlot = Plot.plot({
+  width: 700,
+  height: 260,
+  marginLeft: 48,
+  marginBottom: 40,
+  style: { background: "transparent", color: colors.ink2, fontSize: "12px" },
+  x: { label: "Confounder strength →", domain: [0, 4], grid: true },
+  // The y domain always includes the truth line plus headroom for its label,
+  // so the label never lands on the axis no matter where the slider sits.
+  y: {
+    label: "↑ Estimated effect",
+    grid: true,
+    domain: [Math.min(0, trueAte - 1), Math.max(...biasCurve.map((d) => d.estimate)) + 1]
+  },
+  marks: [
+    // Truth is a reference line in chrome ink, not a competing series.
+    Plot.ruleY([trueAte], { stroke: colors.truth, strokeDasharray: "3,3" }),
+    Plot.text([`True ATE = ${trueAte}`], {
+      frameAnchor: "top-right", dx: -6, dy: 6,
+      fill: colors.truth, fontSize: 11
+    }),
+    Plot.line(biasCurve, {
+      x: "confounding", y: "estimate", stroke: colors.naive, strokeWidth: 2
+    }),
+    // Where the slider currently sits.
+    Plot.dot([{ confounding, estimate }], {
+      x: "confounding", y: "estimate",
+      r: 5, fill: colors.naive, stroke: colors.surface, strokeWidth: 2
+    })
+  ]
+})
+
+fmt = (v) => (Number.isFinite(v) ? v.toFixed(2) : "—")
+
+html`<div class="explorable">
+  <div class="controls">
+    ${viewof confounding}
+    ${viewof sampleSize}
+    ${viewof trueAte}
+  </div>
+  <div class="plot">${scatter}</div>
+  <div class="readout">
+    <div>
+      <span class="stat-label">True ATE</span>
+      <span class="stat-value">${fmt(trueAte)}</span>
+    </div>
+    <div>
+      <span class="stat-label">Naive estimate</span>
+      <span class="stat-value">${fmt(estimate)}</span>
+    </div>
+    <div>
+      <span class="stat-label">Bias</span>
+      <span class="stat-value" style="color:${
+        Math.abs(bias) < 0.1 ? palette.status.good : palette.status.critical
+      }">${fmt(bias)}</span>
+    </div>
+  </div>
+  <div class="plot">${biasPlot}</div>
+</div>`
+```
+
+## What to notice
+
+**Slide the confounder to 0.** The clouds line up, the bias readout goes green,
+and the naive difference lands on the truth. Nothing about the estimator
+changed — only the assignment mechanism did.
+
+**Now raise the sample size with the confounder held high.** The scatter gets
+denser, the estimate steadies, and the bias does not move. This is the point
+worth carrying out of the chapter: more data buys precision, never
+correctness.
+
+**Change the true ATE.** The whole bias curve shifts vertically, but its shape
+is unchanged. Bias is a property of the design, not of the size of the effect
+you are hunting.
+
+::: {.recall}
+Bias from confounding is a property of the assignment mechanism. It survives
+any sample size, and it does not depend on how large the true effect is. Only
+a change in the design — or an assumption that substitutes for one — removes
+it.
+:::
+
+::: {.quiz question="The bias curve rises steeply at first and then flattens. Why does it not grow without bound?"}
+Because the confounder drives assignment through a logistic link. Past a
+certain strength almost every high-$x$ unit is already treated and almost
+every low-$x$ unit already is not — the groups cannot separate any further, so
+the induced gap saturates.
+
+Worth noticing, because it also means a mild-looking bias curve says nothing
+reassuring about the strength of the confounding.
+:::

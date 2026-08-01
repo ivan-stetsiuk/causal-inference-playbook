@@ -1,0 +1,65 @@
+---
+title: "Review"
+subtitle: "Every card in the playbook, in one place"
+toc: true
+toc-depth: 2
+jupyter: python3
+---
+
+Every `.recall` and `.quiz` block from the chapters, collected here so the
+material can be rehearsed without rereading the notes.
+
+The order that actually works: try to recall first, **then** open the answer.
+Recognizing a phrasing feels like knowing it, and is not.
+
+```{python}
+#| echo: false
+#| output: asis
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path.cwd() / "scripts"))
+
+from IPython.display import Markdown, display
+
+from recall_parser import collect
+
+cards = collect()
+
+if not cards:
+    display(Markdown("*No cards yet. Add a `::: {.recall}` block to any chapter.*"))
+else:
+    chapters = {c.chapter for c in cards}
+    n_recall = sum(1 for c in cards if c.kind == "recall")
+    n_quiz = sum(1 for c in cards if c.kind == "quiz")
+    display(Markdown(
+        f"**{len(cards)}** cards: {n_recall} to remember, {n_quiz} to self-check. "
+        f"Chapters covered: {len(chapters)}.\n"
+    ))
+
+    current = None
+    for c in cards:
+        if c.chapter != current:
+            current = c.chapter
+            page = c.source.rsplit(".", 1)[0] + ".html"
+            display(Markdown(f"\n## {current}\n\n[Go to chapter](/{page})\n"))
+
+        if c.kind == "quiz":
+            display(Markdown(f'::: {{.quiz question="{c.question}"}}\n{c.body}\n:::\n'))
+        else:
+            anchor = f"/{c.source.rsplit('.', 1)[0]}.html#{c.anchor}"
+            src = f"\n\n[Context]({anchor})" if c.anchor else ""
+            display(Markdown(f"::: {{.recall}}\n{c.body}{src}\n:::\n"))
+```
+
+## Anki export
+
+The cards are written to a TSV file on every site build:
+
+[Download anki-cards.tsv](anki-cards.tsv){.btn .btn-outline-primary .btn-sm}
+
+Import with **File → Import**, note type `Basic`, separator `Tab`, map the
+third field to `Tags`, and enable **Allow HTML in fields**. Formulas arrive in
+`\(...\)` and `\[...\]` notation, which Anki renders through MathJax with no
+extra setup.

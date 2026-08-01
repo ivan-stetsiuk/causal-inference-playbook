@@ -1,0 +1,123 @@
+# Playbook glossary. Merged into document metadata via metadata-files in
+# _quarto.yml, so both the {{< term key >}} shortcode and glossary.qmd read
+# the same definitions.
+#
+# Fields:
+#   term  - how the term appears in prose by default
+#   short - hover tooltip (single line, no math)
+#   def   - full definition for the glossary page (markdown allowed)
+#   see   - keys of related terms
+
+glossary:
+  potential-outcomes:
+    term: "potential outcomes"
+    short: "The pair Y(0) and Y(1) for one unit: what would happen without treatment and with it"
+    def: |
+      Every unit has **two** outcomes defined: $Y_i(0)$, what would happen
+      without treatment, and $Y_i(1)$, what would happen with it. Exactly one
+      is ever observed. The causal effect for that unit is $Y_i(1) - Y_i(0)$,
+      and it is fundamentally unobservable.
+    see: [counterfactual, fundamental-problem, ate]
+
+  counterfactual:
+    term: "counterfactual"
+    short: "The unobserved half of the potential-outcome pair"
+    def: |
+      Whichever potential outcome did not happen. For a treated unit the
+      counterfactual is $Y_i(0)$. All of causal inference reduces to finding
+      something to stand in for the counterfactual.
+    see: [potential-outcomes, fundamental-problem]
+
+  fundamental-problem:
+    term: "fundamental problem of causal inference"
+    short: "Both potential outcomes can never be observed for the same unit"
+    def: |
+      Holland's formulation: a unit-level causal effect is unobservable
+      because only one half of the pair is ever visible. It follows that
+      causal inference is always a **missing data** problem, not a problem of
+      describing the data you have.
+    see: [potential-outcomes, counterfactual]
+
+  ate:
+    term: "ATE"
+    short: "Average Treatment Effect — the mean effect across the whole population"
+    def: |
+      $ATE = E[Y(1) - Y(0)]$. The average causal effect over all units. It
+      answers "what happens if we treat everyone".
+    see: [att, cate, potential-outcomes]
+
+  att:
+    term: "ATT"
+    short: "The effect on those who actually received treatment"
+    def: |
+      $ATT = E[Y(1) - Y(0) \mid T = 1]$. Diverges from {{< term ate >}} when
+      the effect is heterogeneous and the treated are not a random subset. In
+      practice ATT is usually what gets estimated, even though ATE is usually
+      what gets asked about.
+    see: [ate, cate]
+
+  cate:
+    term: "CATE"
+    short: "Effect conditional on covariates: a function of x, not a number"
+    def: |
+      $CATE(x) = E[Y(1) - Y(0) \mid X = x]$. What you need when the decision
+      is about a specific unit rather than about the population.
+    see: [ate, att]
+
+  rct:
+    term: "randomized experiment"
+    short: "Treatment assigned by a coin flip, independently of potential outcomes"
+    def: |
+      The gold standard. Randomization makes assignment independent of the
+      potential outcomes, so a difference in means estimates {{< term ate >}}
+      without bias and without any modeling assumptions.
+    see: [ignorability, selection-bias]
+
+  selection-bias:
+    term: "selection bias"
+    short: "Outcome gap caused not by treatment but by who ended up in which group"
+    def: |
+      Decomposition of the naive difference in means:
+      $E[Y|T=1] - E[Y|T=0] = \underbrace{ATT}_{\text{effect}} + \underbrace{E[Y(0)|T=1] - E[Y(0)|T=0]}_{\text{selection bias}}$.
+      The second term is how much the groups would have differed **with no
+      treatment at all**. Randomization sets it to zero by construction.
+    see: [confounder, rct, ignorability]
+
+  confounder:
+    term: "confounder"
+    short: "A common cause of both treatment and outcome"
+    def: |
+      A variable affecting both treatment assignment and the outcome. It
+      creates correlation between them in the total absence of a causal link.
+      The crucial asymmetry: a confounder must be **controlled for**, while a
+      collider must not be.
+    see: [selection-bias, ignorability]
+
+  ignorability:
+    term: "ignorability"
+    short: "Conditional independence of assignment from potential outcomes"
+    def: |
+      $(Y(0), Y(1)) \perp T \mid X$. Within each level of $X$, treatment is as
+      good as randomly assigned. The assumption is untestable: data can
+      neither confirm nor refute it, only subject-matter knowledge can argue
+      for it.
+    see: [confounder, rct, positivity]
+
+  positivity:
+    term: "positivity"
+    short: "Every unit has a nonzero chance of landing in either group"
+    def: |
+      $0 < P(T = 1 \mid X = x) < 1$ for all $x$. If at some $x$ everyone is
+      treated or nobody is, there is no counterfactual available there, and
+      no method can repair that.
+    see: [ignorability]
+
+  sutva:
+    term: "SUTVA"
+    short: "No interference between units, and one well-defined version of treatment"
+    def: |
+      Two requirements at once: (1) a unit's outcome does not depend on the
+      treatment assigned to other units; (2) the treatment exists in a single
+      version. Violated by network effects, marketplaces, and anything where
+      units compete for a shared resource.
+    see: [potential-outcomes]

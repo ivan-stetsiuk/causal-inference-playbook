@@ -1,0 +1,27 @@
+---
+title: "Explorables"
+subtitle: "Parameters you can move, with charts that answer immediately"
+listing:
+  contents: "*.qmd"
+  exclude:
+    filename: "index.qmd"
+  type: grid
+  fields: [title, subtitle, categories]
+  sort: "title"
+  categories: true
+toc: false
+---
+
+Explorables are tier T3 of the playbook: pure JavaScript, no server, no
+WebAssembly boot. They exist for one job — building intuition about a
+**parameter**.
+
+That job has a hard requirement: the chart has to answer instantly. A slider
+that stalls for even half a second breaks the loop between moving it and
+seeing the consequence, and that loop is the entire mechanism. Anything that
+cannot be computed in a frame belongs in the [lab](/labs/index.qmd) or in a
+chapter's baked charts instead.
+
+They read the same `theme/palette.json` as everything else, so a color means
+the same thing here as in the chapters. Being client-side, they also respond
+to the theme toggle directly rather than being recolored after the fact.

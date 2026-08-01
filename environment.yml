@@ -1,0 +1,50 @@
+# Python environment for build-time execution (tier T1).
+#
+# CI never uses this: cell output is cached in _freeze/ and committed, so
+# GitHub Actions only assembles HTML. This file is for the local machine.
+#
+#   conda env create -f environment.yml
+#   conda activate causal-playbook
+
+name: causal-playbook
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+
+  # Core
+  - numpy
+  - pandas
+  - scipy
+
+  # Charts. Plotly is the only charting library used for baked figures;
+  # matplotlib is here for quick local inspection, not for the site.
+  - plotly
+  - matplotlib
+
+  # Econometrics and causal inference
+  - statsmodels
+  - scikit-learn
+  - linearmodels
+
+  # DAGs
+  - graphviz
+  - python-graphviz
+
+  # Quarto's jupyter engine needs these to execute {python} cells
+  - jupyter-core
+  - nbformat
+  - nbclient
+  - ipykernel
+
+  # glossary.qmd parses _glossary.yml directly
+  - pyyaml
+
+  - pip
+  - pip:
+      # Heavy causal libraries: build-time only, unavailable in the browser
+      # tier, which is precisely why tier T1 exists.
+      - dowhy
+      - econml

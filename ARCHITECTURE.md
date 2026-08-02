@@ -189,7 +189,8 @@ the architecture rather than left to willpower.
 Every file in `notes/` follows the same seven steps. The order is deliberate:
 intuition before formalism, code before the explorable, own words last.
 
-1. **The question** — what problem the chapter solves, in one sentence
+1. **The question** — the problem the chapter solves, stated precisely enough
+   that the reader can tell whether it was solved by the end
 2. **Intuition** — before any math
 3. **Formalism** — the estimand plus assumptions as named blocks
 4. **Verify with code** — simulate a DGP with known truth, confirm the estimator recovers it

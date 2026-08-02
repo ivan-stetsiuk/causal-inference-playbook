@@ -16,6 +16,22 @@
   letter-spacing: -0.02em;
 }
 
+/* ---------- Display math ---------- */
+/* Wide math scrolls inside its own box rather than stretching the page.
+ *
+ * The vertical padding is not breathing room, it is a bug fix. overflow-x
+ * makes this element a scroll container, and a scroll container clips on BOTH
+ * axes — overflow-y: visible is not even honoured here. KaTeX paints
+ * \underbrace labels and \sum limits outside the line box, so with too little
+ * padding their tops and tails are sliced off. It shows up first on machines
+ * set to always display scrollbars, where the bar eats into the box as well. */
+
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1rem 0;
+}
+
 /* ---------- .recall — a fact worth retaining ---------- */
 /* Visually a card rather than a callout: it also lands in Anki and on the
    review page, so it has to read as a self-contained unit. */
@@ -217,10 +233,41 @@ a.term:hover {
 }
 
 /* ---------- .pb-tip-table — a table whose cells explain themselves ---------- */
+/* Each cell is three stacked lines: the notation, the number, and whether the
+   number is observable. Splitting them is what keeps the table tidy — with
+   notation and value on one line the math is wide enough to wrap mid-
+   expression, which breaks both the dashed underline and the reading. */
 
 .pb-tip-table td,
 .pb-tip-table th {
   vertical-align: top;
+}
+
+/* Quarto assigns every column an equal share. The label column needs less. */
+.pb-tip-table col:first-child {
+  width: 22%;
+}
+
+.pb-tip-table col:not(:first-child) {
+  width: 26%;
+}
+
+.pb-tip-table .pb-tip {
+  white-space: nowrap;
+}
+
+.pb-tip-table .pb-tip .katex {
+  font-size: 0.88em;
+}
+
+/* The number is the thing being compared, so it is the thing that reads
+   first — the notation above it is a label, not the content. */
+.pb-tip-table .pb-val {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 /* Centered bubbles run off the page at the edges of a table. Anchor the
@@ -254,6 +301,23 @@ a.term:hover {
 .pb-tag.is-cf {
   border-style: dashed;
   border-color: var(--viz-ink-muted);
+}
+
+/* Nowrap cells cannot shrink, so on a phone the type shrinks instead. Scrolling
+   the table sideways is the other option and a worse one: it would clip the
+   tooltips, which are the reason the table exists. */
+@media (max-width: 575.98px) {
+  .pb-tip-table .pb-tip .katex {
+    font-size: 0.72em;
+  }
+
+  .pb-tip-table .pb-val {
+    font-size: 1rem;
+  }
+
+  .pb-tip-table .pb-tag {
+    font-size: 0.55rem;
+  }
 }
 
 /* ---------- Charts ---------- */

@@ -32,8 +32,23 @@ from pylib.viz import C, apply_theme, go, px, truth_line
 
 ## [1]{.chapter-step} The question {#sec-question}
 
-How do you measure the effect of a treatment when there is nothing to compare
-against — you cannot both give someone a drug and withhold it?
+Everyone already distinguishes *association* from *causation*. Stated that way
+the distinction is intuitive and useless: it cannot be computed, argued with,
+or checked against data.
+
+This chapter makes both precise. **Association** turns out to be a statement
+about two *different groups* of units; **causation**, a statement about *one
+group* under two different treatments. Once they are written down, they are
+visibly different quantities — and only one of the two can be computed from
+data.
+
+The obstacle is that a causal claim needs an observation that does not exist:
+the same unit both treated and untreated. That is the
+{{< term fundamental-problem >}} [@holland1986]. So **causal inference is what
+makes a causal quantity computable anyway** — a set of assumptions under which
+it can be rewritten using only quantities you can observe. Every method in this
+course is one such set, and the rest of this chapter is the minimum notation
+needed to state any of them.
 
 ## [2]{.chapter-step} Intuition {#sec-intuition}
 
@@ -152,9 +167,9 @@ Hover or tab onto a cell to see what it is.
 ::: {.pb-tip-table}
 |  | $T = 0$ — did not go | $T = 1$ — went | Both groups |
 |:---|:---|:---|:---|
-| **$Y(0)$**<br>nobody goes | [$\mathbb{E}[Y(0) \mid T=0] = 35$]{.tip tip="Average income of the three who did not go, in the world that happened. This cell is data: it is just the mean outcome in the untreated group."}<br>[factual]{.pb-tag} | [$\mathbb{E}[Y(0) \mid T=1] = 55$]{.tip tip="What the three who went would have earned had they not gone. Never observed. It is 55 and not 35 because these three would have out-earned the others with or without college."}<br>[counterfactual]{.pb-tag .is-cf} | [$\mathbb{E}[Y(0)] = 45$]{.tip tip="Average income if none of the six had gone. Half the numbers behind it are counterfactual, so no dataset reports this."} |
-| **$Y(1)$**<br>everybody goes | [$\mathbb{E}[Y(1) \mid T=0] = 43$]{.tip tip="What the three who did not go would have earned had they gone. Never observed."}<br>[counterfactual]{.pb-tag .is-cf} | [$\mathbb{E}[Y(1) \mid T=1] = 69$]{.tip tip="Average income of the three who went, in the world that happened. Also data: the mean outcome in the treated group."}<br>[factual]{.pb-tag} | [$\mathbb{E}[Y(1)] = 56$]{.tip tip="Average income if all six had gone. The same problem in mirror image."} |
-| **effect**<br>read down a column | [$\text{ATU} = 8$]{.tip tip="Average effect on the untreated: 43 minus 35. What college would have done for the three who skipped it."} | [$\text{ATT} = 14$]{.tip tip="Average effect on the treated: 69 minus 55. What college actually did for the three who went."} | [$\text{ATE} = 11$]{.tip tip="Average effect over all six: 56 minus 45. It sits between ATU and ATT because the effect is not the same for everyone."} |
+| **$Y(0)$**<br>nobody goes | [$\mathbb{E}[Y(0) \mid T=0]$]{.tip tip="Average income of the three who did not go, in the world that happened. This cell is data: it is just the mean outcome in the untreated group."}<br>[35]{.pb-val}[factual]{.pb-tag} | [$\mathbb{E}[Y(0) \mid T=1]$]{.tip tip="What the three who went would have earned had they not gone. Never observed. It is 55 and not 35 because these three would have out-earned the others with or without college."}<br>[55]{.pb-val}[counterfactual]{.pb-tag .is-cf} | [$\mathbb{E}[Y(0)]$]{.tip tip="Average income if none of the six had gone. Half the numbers behind it are counterfactual, so no dataset reports this."}<br>[45]{.pb-val} |
+| **$Y(1)$**<br>everybody goes | [$\mathbb{E}[Y(1) \mid T=0]$]{.tip tip="What the three who did not go would have earned had they gone. Never observed."}<br>[43]{.pb-val}[counterfactual]{.pb-tag .is-cf} | [$\mathbb{E}[Y(1) \mid T=1]$]{.tip tip="Average income of the three who went, in the world that happened. Also data: the mean outcome in the treated group."}<br>[69]{.pb-val}[factual]{.pb-tag} | [$\mathbb{E}[Y(1)]$]{.tip tip="Average income if all six had gone. The same problem in mirror image."}<br>[56]{.pb-val} |
+| **effect**<br>down a column | [$\text{ATU}$]{.tip tip="Average effect on the untreated: 43 minus 35. What college would have done for the three who skipped it."}<br>[8]{.pb-val} | [$\text{ATT}$]{.tip tip="Average effect on the treated: 69 minus 55. What college actually did for the three who went."}<br>[14]{.pb-val} | [$\text{ATE}$]{.tip tip="Average effect over all six: 56 minus 45. It sits between ATU and ATT because the effect is not the same for everyone."}<br>[11]{.pb-val} |
 
 : The same six people, averaged. Solid cells are observable, dashed cells are
 counterfactual, and every causal quantity is a difference **down** a column.
@@ -205,9 +220,9 @@ center of the chapter [@angrist2009; @facure2022]:
 
 $$
 \begin{aligned}
-\underbrace{\mathbb{E}[Y \mid T=1] - \mathbb{E}[Y \mid T=0]}_{\text{what we computed}}
-&= \underbrace{\mathbb{E}[Y(1) - Y(0) \mid T=1]}_{\text{ATT — what we wanted}} \\[0.6em]
-&\quad + \underbrace{\mathbb{E}[Y(0) \mid T=1] - \mathbb{E}[Y(0) \mid T=0]}_{\text{selection bias}}
+  & \underbrace{\mathbb{E}[Y \mid T=1] - \mathbb{E}[Y \mid T=0]}_{\text{what the data gives you}} \\[1.6em]
+={} & \underbrace{\mathbb{E}[Y(1) - Y(0) \mid T=1]}_{\text{ATT — what you wanted}} \\[1.6em]
++{} & \underbrace{\mathbb{E}[Y(0) \mid T=1] - \mathbb{E}[Y(0) \mid T=0]}_{\text{selection bias}}
 \end{aligned}
 $$
 

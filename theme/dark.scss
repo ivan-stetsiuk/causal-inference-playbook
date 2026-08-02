@@ -28,11 +28,7 @@ h3 {
   margin-top: 1.8rem;
 }
 
-.katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.35rem 0;
-}
+// .katex-display lives in components.css — see the note in light.scss.
 
 blockquote {
   border-left: 3px solid var(--viz-grid);

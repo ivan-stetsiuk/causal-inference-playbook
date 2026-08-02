@@ -28,12 +28,8 @@ h3 {
   margin-top: 1.8rem;
 }
 
-// Display math scrolls inside its own box rather than stretching the page.
-.katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.35rem 0;
-}
+// .katex-display lives in components.css: it carries no color, and keeping one
+// copy is the only way it cannot drift from the dark theme's.
 
 blockquote {
   border-left: 3px solid var(--viz-grid);

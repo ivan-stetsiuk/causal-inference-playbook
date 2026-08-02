@@ -7,9 +7,10 @@ categories: [explorable, bias, confounding]
 [Chapter 1](/notes/01-introduction.qmd) shows two points: confounding present,
 confounding absent. The interesting part is the transition between them.
 
-At strength 0 the design **is** a randomized experiment — the confounder does
-nothing, and the naive difference in means lands on the truth. Push the slider
-and the estimate walks away from a truth that never moved.
+Two of the sliders here do completely different jobs, and telling them apart is
+the whole exercise. **Confounder strength** moves the number the naive
+estimator converges to. **Sample size** moves nothing except how far one study
+is likely to land from that number.
 
 ```{ojs}
 //| echo: false
@@ -86,6 +87,55 @@ function naiveDiff(rows) {
   if (!t.length || !c.length) return NaN;
   return d3.mean(t, (r) => r.y) - d3.mean(c, (r) => r.y);
 }
+
+// One repetition of the whole study, keeping only the two group means.
+// Materialising 100 x 5000 rows to end up with 100 numbers is what would make
+// the sliders stutter.
+function naiveDiffOnce(n, confounding, ate, seed, baseline = 10, noise = 1) {
+  const rng = makeRng(seed);
+  let spare = null;
+  const normal = () => {
+    if (spare !== null) { const v = spare; spare = null; return v; }
+    const r = Math.sqrt(-2 * Math.log(Math.max(rng(), 1e-12)));
+    const a = 2 * Math.PI * rng();
+    spare = r * Math.sin(a);
+    return r * Math.cos(a);
+  };
+  let s1 = 0, n1 = 0, s0 = 0, n0 = 0;
+  for (let i = 0; i < n; i++) {
+    const x = normal();
+    const t = rng() < 1 / (1 + Math.exp(-confounding * x)) ? 1 : 0;
+    const y = baseline + confounding * x + noise * normal() + (t === 1 ? ate : 0);
+    if (t === 1) { s1 += y; n1++; } else { s0 += y; n0++; }
+  }
+  return n1 && n0 ? s1 / n1 - s0 / n0 : NaN;
+}
+```
+
+```{ojs}
+//| echo: false
+
+// The bias has a closed form, so it never has to be guessed from a finite
+// sample — which is exactly the confusion this page exists to remove.
+//
+//   naive estimand = ATE + c * ( E[x | T=1] - E[x | T=0] )
+//
+// sigmoid(cx) is symmetric about x = 0 and x is standard normal, so
+// P(T = 1) = 1/2 exactly and the bracket collapses to 4 * E[x * sigmoid(cx)],
+// a single integral against the normal density. Checked against a 200,000-row
+// Monte Carlo run of pylib/dgp.py confounded(): agrees to three decimals.
+biasGrid = d3.range(-8, 8.0001, 0.01)
+biasDensity = biasGrid.map((g) => Math.exp((-g * g) / 2) / Math.sqrt(2 * Math.PI))
+
+function biasAnalytic(c) {
+  let acc = 0;
+  for (let i = 0; i < biasGrid.length; i++) {
+    const g = biasGrid[i];
+    const edge = i === 0 || i === biasGrid.length - 1 ? 0.5 : 1;
+    acc += (edge * g * biasDensity[i]) / (1 + Math.exp(-c * g));
+  }
+  return 4 * c * acc * 0.01;
+}
 ```
 
 ```{ojs}
@@ -109,14 +159,44 @@ viewof trueAte = Inputs.range([0, 5], {
 
 data = simulate({ n: sampleSize, confounding, ate: trueAte })
 estimate = naiveDiff(data)
-bias = estimate - trueAte
 
-// Bias across the whole slider range, so the current position reads as a
-// point on a curve rather than an isolated number.
-biasCurve = d3.range(0, 4.05, 0.1).map((c) => {
-  const rows = simulate({ n: 1500, confounding: c, ate: trueAte });
-  return { confounding: c, estimate: naiveDiff(rows) };
-})
+// The systematic part: what the naive estimator converges to as n grows, minus
+// the truth. Note what it is not a function of — the sample size.
+biasTrue = biasAnalytic(confounding)
+estimand = trueAte + biasTrue
+
+// The sampling distribution. Each replicate repeats the entire study at the
+// current settings. This is where the sample size does its work, and it works
+// on the spread, never on the centre.
+REPLICATIONS = 100
+replicates = d3
+  .range(REPLICATIONS)
+  .map((r) => naiveDiffOnce(sampleSize, confounding, trueAte, 7919 * (r + 1)))
+  .filter(Number.isFinite)
+
+spread = d3.deviation(replicates)
+
+// Half-width of the sampling window below. Sized from the spread at the
+// SMALLEST n the slider allows, which makes it a constant with respect to n:
+// the cloud can never overflow the frame, and the frame never rescales as the
+// cloud shrinks. Sizing it from the current spread would hide the shrinking,
+// and a flat constant would clip the cloud at n = 200.
+sampMargin = Math.max(
+  0.3,
+  3.2 * d3.deviation(
+    d3.range(REPLICATIONS)
+      .map((r) => naiveDiffOnce(200, confounding, trueAte, 7919 * (r + 1)))
+      .filter(Number.isFinite)
+  )
+)
+
+// Analytic rather than simulated, so the curve is smooth and visibly
+// unaffected by the sample-size slider. A Monte-Carlo curve would wobble
+// whenever n moved, which is the very thing being disproved here.
+biasCurve = d3.range(0, 4.05, 0.05).map((c) => ({
+  confounding: c,
+  estimand: trueAte + biasAnalytic(c)
+}))
 ```
 
 ```{ojs}
@@ -124,7 +204,7 @@ biasCurve = d3.range(0, 4.05, 0.1).map((c) => {
 
 scatter = Plot.plot({
   width: 700,
-  height: 340,
+  height: 320,
   marginLeft: 48,
   marginBottom: 40,
   style: { background: "transparent", color: colors.ink2, fontSize: "12px" },
@@ -152,7 +232,7 @@ scatter = Plot.plot({
 
 biasPlot = Plot.plot({
   width: 700,
-  height: 260,
+  height: 250,
   marginLeft: 48,
   marginBottom: 40,
   style: { background: "transparent", color: colors.ink2, fontSize: "12px" },
@@ -160,9 +240,9 @@ biasPlot = Plot.plot({
   // The y domain always includes the truth line plus headroom for its label,
   // so the label never lands on the axis no matter where the slider sits.
   y: {
-    label: "↑ Estimated effect",
+    label: "↑ What the naive estimator converges to",
     grid: true,
-    domain: [Math.min(0, trueAte - 1), Math.max(...biasCurve.map((d) => d.estimate)) + 1]
+    domain: [Math.min(0, trueAte - 1), Math.max(...biasCurve.map((d) => d.estimand)) + 1]
   },
   marks: [
     // Truth is a reference line in chrome ink, not a competing series.
@@ -172,12 +252,57 @@ biasPlot = Plot.plot({
       fill: colors.truth, fontSize: 11
     }),
     Plot.line(biasCurve, {
-      x: "confounding", y: "estimate", stroke: colors.naive, strokeWidth: 2
+      x: "confounding", y: "estimand", stroke: colors.naive, strokeWidth: 2
     }),
     // Where the slider currently sits.
-    Plot.dot([{ confounding, estimate }], {
-      x: "confounding", y: "estimate",
+    Plot.dot([{ confounding, estimand }], {
+      x: "confounding", y: "estimand",
       r: 5, fill: colors.naive, stroke: colors.surface, strokeWidth: 2
+    })
+  ]
+})
+
+// A window of fixed width around the two reference lines: it reacts to the
+// bias but NOT to n. That is deliberate — on an auto-scaled axis the cloud
+// would always fill the frame and the shrinking would be invisible.
+sampWindow = ({
+  lo: Math.min(trueAte, estimand) - sampMargin,
+  hi: Math.max(trueAte, estimand) + sampMargin
+})
+
+samplingPlot = Plot.plot({
+  width: 700,
+  height: 200,
+  marginLeft: 48,
+  marginRight: 20,
+  marginTop: 30,
+  marginBottom: 42,
+  style: { background: "transparent", color: colors.ink2, fontSize: "12px" },
+  x: {
+    label: `${REPLICATIONS} repeats of the same study, n = ${sampleSize} each →`,
+    domain: [sampWindow.lo, sampWindow.hi],
+    grid: true
+  },
+  y: { axis: null, domain: [0, 1] },
+  marks: [
+    Plot.ruleX([trueAte], { stroke: colors.truth, strokeDasharray: "3,3" }),
+    Plot.text([{ x: trueAte, y: 1, t: `truth = ${trueAte}` }], {
+      x: "x", y: "y", text: "t", dy: -8,
+      fill: colors.truth, fontSize: 11, textAnchor: "middle"
+    }),
+    Plot.ruleX([estimand], { stroke: colors.naive, strokeWidth: 2 }),
+    // Inside the frame rather than under it: with no confounding the two rules
+    // coincide, and a label below the frame lands on the axis ticks.
+    Plot.text([{ x: estimand, y: 1, t: `converges to ${estimand.toFixed(2)}` }], {
+      x: "x", y: "y", text: "t", dy: 10,
+      fill: colors.naive, fontSize: 11, textAnchor: "middle"
+    }),
+    // One dot per repeat of the study. Jitter is derived from the index rather
+    // than drawn, so the strip does not reshuffle on every redraw.
+    Plot.dot(replicates, {
+      x: (d) => d,
+      y: (d, i) => 0.2 + 0.6 * (((i * 2654435761) % 997) / 997),
+      r: 3.2, fill: colors.naive, fillOpacity: 0.42
     })
   ]
 })
@@ -197,34 +322,59 @@ html`<div class="explorable">
       <span class="stat-value">${fmt(trueAte)}</span>
     </div>
     <div>
-      <span class="stat-label">Naive estimate</span>
+      <span class="stat-label">This sample's estimate</span>
       <span class="stat-value">${fmt(estimate)}</span>
     </div>
     <div>
-      <span class="stat-label">Bias</span>
+      <span class="stat-label">Bias — set by the design</span>
       <span class="stat-value" style="color:${
-        Math.abs(bias) < 0.1 ? palette.status.good : palette.status.critical
-      }">${fmt(bias)}</span>
+        Math.abs(biasTrue) < 0.05 ? palette.status.good : palette.status.critical
+      }">${fmt(biasTrue)}</span>
+    </div>
+    <div>
+      <span class="stat-label">Spread — set by n</span>
+      <span class="stat-value">± ${fmt(spread)}</span>
     </div>
   </div>
   <div class="plot">${biasPlot}</div>
+  <div class="plot">${samplingPlot}</div>
 </div>`
 ```
 
 ## What to notice
 
-**Slide the confounder to 0.** The clouds line up, the bias readout goes green,
-and the naive difference lands on the truth. Nothing about the estimator
-changed — only the assignment mechanism did.
+**Move the sample size with the confounder held high.** In the bottom strip the
+cloud of repeated studies tightens, while the line it tightens *onto* does not
+budge. The readout says the same thing twice: **spread** falls, **bias** does
+not change at all. More data buys precision, never correctness.
 
-**Now raise the sample size with the confounder held high.** The scatter gets
-denser, the estimate steadies, and the bias does not move. This is the point
-worth carrying out of the chapter: more data buys precision, never
-correctness.
+**Now set the confounder to 0.** Bias becomes exactly zero and the cloud
+centres on the truth. Raise the sample size from here and a single estimate
+does creep toward the true ATE — but that is the spread collapsing, not a bias
+being cured. There was no bias to cure.
 
-**Change the true ATE.** The whole bias curve shifts vertically, but its shape
-is unchanged. Bias is a property of the design, not of the size of the effect
-you are hunting.
+That distinction is the thing to carry away, because a real study only ever
+shows you one dot:
+
+$$
+\underbrace{\hat\tau - \tau}_{\text{how far one study lands}}
+\;=\; \underbrace{\mathbb{E}[\hat\tau] - \tau}_{\text{bias — the design}}
+\;+\; \underbrace{\hat\tau - \mathbb{E}[\hat\tau]}_{\text{noise — the sample size}}
+$$
+
+Only the second term shrinks with $n$. So watching one estimate settle down as
+data accumulates says nothing about whether it is settling on the right number.
+
+**Change the true ATE.** The whole curve shifts vertically, but its shape is
+unchanged. Bias is a property of the design, not of the size of the effect you
+are hunting.
+
+::: {.recall}
+A single estimate misses the truth by **bias plus noise**, and only noise
+shrinks with the sample size. An estimate stabilising as data accumulates is
+therefore no evidence that it is stabilising on the truth: a biased estimator
+converges too — neatly, confidently, and onto the wrong number.
+:::
 
 ::: {.recall}
 Bias from confounding is a property of the assignment mechanism. It survives
@@ -233,12 +383,38 @@ a change in the design — or an assumption that substitutes for one — removes
 it.
 :::
 
-::: {.quiz question="The bias curve rises steeply at first and then flattens. Why does it not grow without bound?"}
-Because the confounder drives assignment through a logistic link. Past a
-certain strength almost every high-$x$ unit is already treated and almost
-every low-$x$ unit already is not — the groups cannot separate any further, so
-the induced gap saturates.
+::: {.quiz question="With the confounder at zero the bias readout stays at 0.00, yet a single estimate still misses the true ATE — and misses by less as n grows. Is that bias?"}
+No, it is noise. At strength 0 assignment is a fair coin that knows nothing
+about the potential outcomes, so $\mathbb{E}[\hat\tau] = \tau$ exactly: the
+estimator is unbiased, and the dashed truth line runs through the middle of the
+cloud at *every* sample size.
 
-Worth noticing, because it also means a mild-looking bias curve says nothing
-reassuring about the strength of the confounding.
+What shrinks is the width of that cloud, at rate $1/\sqrt{n}$. Bias is a
+statement about where the cloud is centred; the sample size only controls how
+tightly it is packed.
+
+The trap is that a real study gives you one dot and no truth line, so from
+inside it the two are indistinguishable. Telling them apart is always a claim
+about the design, never a reading off the data.
+:::
+
+::: {.quiz question="The bias curve starts flat, bends sharply upward, then straightens out. Does it level off if you push the confounder far enough?"}
+No — it keeps climbing, and asymptotically in a straight line. Worth being
+precise about, because the curve *looks* like it is heading for a plateau.
+
+One slider is driving two channels at once. It sets how strongly $x$ selects
+who gets treated, and it also sets how strongly $x$ moves the outcome, since
+$y_0 = 10 + c\,x + \varepsilon$. The selection channel genuinely does saturate:
+past a certain strength nearly every high-$x$ unit is already treated and
+nearly every low-$x$ unit already is not, so the gap
+$\mathbb{E}[x \mid T=1] - \mathbb{E}[x \mid T=0]$ tops out at
+$4\varphi(0) \approx 1.60$. The outcome channel never saturates, so the product
+
+$$\text{bias} = c \cdot \big(\mathbb{E}[x \mid T=1] - \mathbb{E}[x \mid T=0]\big)$$
+
+grows without bound — quadratically near zero, then linearly with slope
+$\approx 1.60$.
+
+The lesson is about the model rather than the world: when one knob drives two
+mechanisms, the shape of the resulting curve belongs to neither of them.
 :::

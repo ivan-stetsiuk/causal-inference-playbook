@@ -85,6 +85,34 @@ local function render_quiz(div)
   return div
 end
 
+--- .tip — an inline explanation, shown on hover or on keyboard focus.
+---
+---   [$\mathbb{E}[Y(0) \mid T = 0] = 35$]{.tip tip="The three who did not go ..."}
+---
+--- The text moves to data-tip, which CSS renders through content: attr(...).
+--- Two things that are easy to get wrong and are handled here: tabindex, so
+--- the bubble can be opened without a mouse at all, and a visually hidden
+--- copy of the text, because a screen reader cannot see a ::after bubble.
+--- The hidden copy sits inside the trigger, so it is read as part of it.
+local function render_tip(span)
+  local text = span.attributes["tip"]
+  if not text or text == "" then
+    quarto.log.warning("playbook: [...]{.tip} without a tip= attribute")
+    return span
+  end
+
+  span.attributes["tip"] = nil
+  span.attributes["data-tip"] = text
+  span.attributes["tabindex"] = "0"
+  span.classes:insert("pb-tip")
+
+  span.content:insert(pandoc.Span(
+    pandoc.Str(" — " .. text),
+    pandoc.Attr("", { "pb-sr-only" })
+  ))
+  return span
+end
+
 --- .recall — attach an anchor. All styling lives in CSS.
 local function render_recall(div)
   recall_n = recall_n + 1
@@ -98,5 +126,10 @@ function Div(div)
   if has_class(div, "recall") then return render_recall(div) end
   if has_class(div, "assumption") then return render_assumption(div) end
   if has_class(div, "quiz") then return render_quiz(div) end
+  return nil
+end
+
+function Span(span)
+  if has_class(span, "tip") then return render_tip(span) end
   return nil
 end

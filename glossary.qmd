@@ -28,6 +28,20 @@ for key, e in sorted(entries.items(), key=lambda kv: kv[1].get("term", kv[0]).lo
         out.append(f'*{e["short"]}*\n')
     if e.get("def"):
         out.append(e["def"].strip() + "\n")
+    # Other names for the same object. Reading across literatures is where
+    # most of the confusion in this field comes from.
+    if e.get("aka"):
+        out.append(f'\nAlso called: {e["aka"].strip()}\n')
+    # A real disagreement between standard works, called out rather than
+    # silently resolved.
+    if e.get("note"):
+        out.append(f'\n::: {{.callout-warning appearance="simple"}}\n'
+                   f'{e["note"].strip()}\n:::\n')
+    # Citekeys become live citations: the reference list at the bottom of the
+    # page is assembled by citeproc, not maintained by hand.
+    if e.get("src"):
+        cites = "; ".join(f"@{k}" for k in e["src"])
+        out.append(f"\nSource: [{cites}]\n")
     if e.get("see"):
         links = ", ".join(
             f'[{entries.get(k, {}).get("term", k)}](#term-{k})' for k in e["see"]

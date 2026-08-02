@@ -125,7 +125,10 @@ causal-inference-playbook/
 │   ├── plotly-theme-sync.js     # recolors baked charts on theme toggle
 │   └── {light,dark}.scss        # hand-written non-color rules
 │
-├── _extensions/playbook/        # Lua filters and the {{< term >}} shortcode
+├── assets/diagrams/             # schematic SVG, inlined by {{< diagram >}}
+│   └── causation-vs-association.svg
+│
+├── _extensions/playbook/        # Lua filters, {{< term >}} and {{< diagram >}}
 ├── scripts/
 │   ├── build_tokens.py          # palette.json -> all generated theme files
 │   ├── recall_parser.py         # extracts .recall / .quiz from .qmd sources
@@ -207,11 +210,32 @@ understood. If it does not, we have learned exactly what we do not understand.
 | Term | `{{< term ate >}}` | Glossary link with a hover definition |
 | Assumption | `::: {.assumption name="Ignorability"}` | Named block, cross-referenceable |
 | Self-check | `::: {.quiz question="…"}` | Question with the answer behind a disclosure |
+| Notation gloss | `[$\mathbb{E}[Y(0)]$]{.tip tip="…"}` | Hover/focus bubble explaining a symbol in place |
+| Diagram | `{{< diagram name >}}` | Inlines `assets/diagrams/name.svg` |
 | Anki export | `scripts/export_anki.py` (post-render) | Parses `.recall` / `.quiz`, writes TSV into `_site/` |
 | Review page | `recall.qmd` | Every card grouped by chapter |
 
 Parsing runs against `.qmd` sources rather than rendered HTML, so a card exists
 before the render and the review page never depends on build order.
+
+`.tip` is CSS-only rather than built on the Tippy bundle Quarto already ships
+for citation hovers. The reason is availability: Tippy is included only when a
+page happens to enable a feature that needs it, and a tooltip that silently
+stops working on some pages is worse than one that never had collision
+detection. `playbook.lua` adds `tabindex` and a visually hidden copy of the
+text, so the explanation is reachable by keyboard and by screen reader — a
+`::after` bubble alone is neither.
+
+### 5.3 Sourcing
+
+Definitions are not written from memory. Every `_glossary.yml` entry carries a
+`src` list of citekeys from `references.bib`, rendered as live citations on the
+glossary page, and an `aka` field for what the same object is called in the
+other standard works — reading across literatures is where most of the
+confusion in this field comes from. Where two standard works genuinely
+disagree, a `note` field says so instead of quietly picking a side; the
+`selection-bias` entry is the working example, since Hernán and Robins use that
+name for something the econometrics literature calls confounding.
 
 ---
 
@@ -231,6 +255,13 @@ decorating individual charts. So the tokens are defined once and reused.
   attributes do not respond to CSS variables.
 - **Semantics of form** — point estimates with intervals always look the same;
   counterfactual quantities are always dashed.
+- **Diagrams are inline SVG, never images.** `{{< diagram name >}}` reads
+  `assets/diagrams/name.svg` and inlines it, because a linked SVG is a separate
+  document that cannot see `var(--viz-*)` — it would be the one element on the
+  page ignoring the theme toggle, and it would need a second file for dark
+  mode. The `.svg` carries geometry and semantic classes only; color, size and
+  weight come from `theme/components.css`. A raster screenshot of a diagram is
+  a regression, not a shortcut.
 
 ---
 

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 340"
+     role="img" aria-labelledby="cva-title cva-desc">
+  <title id="cva-title">Causation compared with association</title>
+  <desc id="cva-desc">The population of interest is split into a treated and an
+    untreated part. Causation compares the whole population under treatment
+    with the whole population under no treatment. Association compares the
+    treated part with the untreated part, which are two different sets of
+    units.</desc>
+
+  <!-- No color, size or font is set here. Every value comes from
+       theme/components.css, which reads it from the var(--viz-*) tokens
+       generated out of theme/palette.json. That is what lets one file serve
+       both the light and the dark theme. -->
+
+  <defs>
+    <marker id="cva-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path class="d-arrow-head" d="M 0 0 L 10 5 L 0 10 Z"/>
+    </marker>
+  </defs>
+
+  <!-- ---- The population, split by the assignment ---- -->
+
+  <text class="d-title" x="300" y="24" text-anchor="middle">Population of interest</text>
+
+  <path class="d-treated" d="M300 46 L266 80 L300 114 Z"/>
+  <path class="d-control" d="M300 46 L334 80 L300 114 Z"/>
+
+  <text class="d-label" x="256" y="85" text-anchor="end">Treated</text>
+  <text class="d-label" x="344" y="85" text-anchor="start">Untreated</text>
+
+  <path class="d-arrow" marker-end="url(#cva-arrow)" d="M282 122 L200 158"/>
+  <path class="d-arrow" marker-end="url(#cva-arrow)" d="M318 122 L400 158"/>
+
+  <!-- ---- Causation: whole shapes, so the same population twice ---- -->
+
+  <text class="d-panel" x="160" y="188" text-anchor="middle">Causation</text>
+  <text class="d-note"  x="160" y="207" text-anchor="middle">the same population, twice</text>
+
+  <path class="d-treated" d="M110 230 L78 262 L110 294 L142 262 Z"/>
+  <text class="d-vs" x="160" y="267" text-anchor="middle">vs.</text>
+  <path class="d-control" d="M210 230 L178 262 L210 294 L242 262 Z"/>
+
+  <text class="d-estimand" x="110" y="322" text-anchor="middle">𝔼[Y(1)]</text>
+  <text class="d-estimand" x="210" y="322" text-anchor="middle">𝔼[Y(0)]</text>
+
+  <!-- ---- Association: the two halves, so two different groups ---- -->
+
+  <text class="d-panel" x="440" y="188" text-anchor="middle">Association</text>
+  <text class="d-note"  x="440" y="207" text-anchor="middle">two different subgroups</text>
+
+  <path class="d-treated" d="M395 230 L363 262 L395 294 Z"/>
+  <text class="d-vs" x="440" y="267" text-anchor="middle">vs.</text>
+  <path class="d-control" d="M485 230 L517 262 L485 294 Z"/>
+
+  <text class="d-estimand" x="379" y="322" text-anchor="middle">𝔼[Y | T = 1]</text>
+  <text class="d-estimand" x="501" y="322" text-anchor="middle">𝔼[Y | T = 0]</text>
+</svg>

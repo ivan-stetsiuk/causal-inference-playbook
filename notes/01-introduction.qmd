@@ -82,7 +82,20 @@ $$
 The observed outcome is a **collapse** of the potential-outcome pair. The other
 half — the {{< term counterfactual >}} — is not merely unknown, it is
 unobservable in principle. This is the [fundamental problem of causal
-inference](/glossary.qmd#term-fundamental-problem).
+inference](/glossary.qmd#term-fundamental-problem) [@holland1986].
+:::
+
+::: {.callout-note appearance="simple" collapse="true"}
+## Notation across the standard references
+
+This playbook writes $T$ for treatment and $Y(1), Y(0)$ for the potential
+outcomes, after @rubin1974 and @facure2022. @hernan2020 write $A$ for the
+treatment and $Y^{a=1}, Y^{a=0}$ for the same two objects, and call
+{{< term ignorability >}} *conditional exchangeability*; @angrist2009 call the
+same assumption the conditional independence assumption. The objects are
+identical and only the names differ — with one genuine exception, recorded in
+the {{< term selection-bias >}} glossary entry, where the two literatures
+attach the same words to different things.
 :::
 
 ### What can actually be estimated
@@ -91,9 +104,9 @@ The individual effect $\tau_i$ is never available. Averages are:
 
 $$
 \begin{aligned}
-\text{ATE} &= E[Y(1) - Y(0)] \\
-\text{ATT} &= E[Y(1) - Y(0) \mid T = 1] \\
-\text{CATE}(x) &= E[Y(1) - Y(0) \mid X = x]
+\text{ATE} &= \mathbb{E}[Y(1) - Y(0)] \\
+\text{ATT} &= \mathbb{E}[Y(1) - Y(0) \mid T = 1] \\
+\text{CATE}(x) &= \mathbb{E}[Y(1) - Y(0) \mid X = x]
 \end{aligned}
 $$
 
@@ -102,21 +115,119 @@ $$
 heterogeneous effect these are different numbers, and substituting one for the
 other is not a rounding error.
 
+### Six people and one decision {#sec-example}
+
+Take the smallest example that still contains everything. Six people; three
+went to college ($T = 1$) and three did not ($T = 0$); $Y$ is annual income in
+thousands, measured ten years on.
+
+Now step outside the data and write down **both** potential outcomes for all
+six — the thing no dataset ever contains. Bold is what was actually observed,
+italic is the half that was not.
+
+| Person | $T$ | $Y(0)$ | $Y(1)$ | $\tau_i$ |
+|:---|:---:|---:|---:|---:|
+| A | 1 | *60* | **75** | 15 |
+| B | 1 | *55* | **68** | 13 |
+| C | 1 | *50* | **64** | 14 |
+| D | 0 | **40** | *48* | 8 |
+| E | 0 | **35** | *44* | 9 |
+| F | 0 | **30** | *37* | 7 |
+
+: Six units with both potential outcomes revealed. Exactly one number per row
+is ever real data; the individual effect $\tau_i$ in the last column is never
+computable outside a thought experiment like this one. The shape of the table
+follows @facure2022 [ch. 1] and @hernan2020 [ch. 1]; the numbers are invented
+for this page. {#tbl-units}
+
+Two things are true of @tbl-units at once, and between them they are the whole
+chapter. College helps **everyone** — the effect runs from 7 to 15 and is
+never negative. And the three who went were already the higher earners: their
+$Y(0)$ values are 60, 55, 50 against 40, 35, 30. Nothing caused that gap. It
+is simply who chose to go.
+
+Average each quadrant and one small table holds every quantity in the chapter.
+Hover or tab onto a cell to see what it is.
+
+::: {.pb-tip-table}
+|  | $T = 0$ — did not go | $T = 1$ — went | Both groups |
+|:---|:---|:---|:---|
+| **$Y(0)$**<br>nobody goes | [$\mathbb{E}[Y(0) \mid T=0] = 35$]{.tip tip="Average income of the three who did not go, in the world that happened. This cell is data: it is just the mean outcome in the untreated group."}<br>[factual]{.pb-tag} | [$\mathbb{E}[Y(0) \mid T=1] = 55$]{.tip tip="What the three who went would have earned had they not gone. Never observed. It is 55 and not 35 because these three would have out-earned the others with or without college."}<br>[counterfactual]{.pb-tag .is-cf} | [$\mathbb{E}[Y(0)] = 45$]{.tip tip="Average income if none of the six had gone. Half the numbers behind it are counterfactual, so no dataset reports this."} |
+| **$Y(1)$**<br>everybody goes | [$\mathbb{E}[Y(1) \mid T=0] = 43$]{.tip tip="What the three who did not go would have earned had they gone. Never observed."}<br>[counterfactual]{.pb-tag .is-cf} | [$\mathbb{E}[Y(1) \mid T=1] = 69$]{.tip tip="Average income of the three who went, in the world that happened. Also data: the mean outcome in the treated group."}<br>[factual]{.pb-tag} | [$\mathbb{E}[Y(1)] = 56$]{.tip tip="Average income if all six had gone. The same problem in mirror image."} |
+| **effect**<br>read down a column | [$\text{ATU} = 8$]{.tip tip="Average effect on the untreated: 43 minus 35. What college would have done for the three who skipped it."} | [$\text{ATT} = 14$]{.tip tip="Average effect on the treated: 69 minus 55. What college actually did for the three who went."} | [$\text{ATE} = 11$]{.tip tip="Average effect over all six: 56 minus 45. It sits between ATU and ATT because the effect is not the same for everyone."} |
+
+: The same six people, averaged. Solid cells are observable, dashed cells are
+counterfactual, and every causal quantity is a difference **down** a column.
+{#tbl-po}
+:::
+
+The table is read in three directions, and each direction asks a different
+question:
+
+- **Down a column** — the same people under two regimes. This is a causal
+  contrast. $69 - 55 = 14$ is {{< term att >}}, $43 - 35 = 8$ is
+  {{< term atu >}}, and over both groups $56 - 45 = 11$ is {{< term ate >}}.
+- **Across the $Y(0)$ row** — different people under the *same* regime. Nothing
+  causal is happening: $55 - 35 = 20$ is how far apart the two groups sit
+  before college is even on the table.
+- **Across the two solid cells** — the only comparison the data supports, and
+  the one that mixes the first two together.
+
+That third reading is the naive estimator, and it is what a spreadsheet gives
+you:
+
+$$
+\underbrace{\mathbb{E}[Y \mid T = 1] - \mathbb{E}[Y \mid T = 0]}_{\text{naive}}
+\;=\; 69 - 35 \;=\; 34.
+$$
+
+Read causally it says college is worth 34. The true average effect is 11. The
+naive number overstates it threefold, and the excess is not an arithmetic slip
+— it is the 20 sitting in the $Y(0)$ row, the gap that would have been there
+had nobody gone to college at all.
+
+Worth noting what the plain average $\mathbb{E}[Y] = 52$ contributes here:
+nothing. It averages people living under two different regimes, so it answers
+no causal question at all.
+
+::: {.recall}
+In the potential-outcomes table a **causal** contrast is read *down a column* —
+the same people under two regimes. The naive contrast is read *across the two
+observed cells* — different people under different regimes. Every method in
+this course is a way of filling in one counterfactual cell so that a column
+can be read.
+:::
+
 ### Where the bias comes from
 
 The naive difference in means decomposes into two parts. This identity is the
-center of the chapter:
+center of the chapter [@angrist2009; @facure2022]:
 
 $$
 \begin{aligned}
-\underbrace{E[Y \mid T=1] - E[Y \mid T=0]}_{\text{what we computed}}
-&= \underbrace{E[Y(1) - Y(0) \mid T=1]}_{\text{ATT — what we wanted}} \\[0.6em]
-&\quad + \underbrace{E[Y(0) \mid T=1] - E[Y(0) \mid T=0]}_{\text{selection bias}}
+\underbrace{\mathbb{E}[Y \mid T=1] - \mathbb{E}[Y \mid T=0]}_{\text{what we computed}}
+&= \underbrace{\mathbb{E}[Y(1) - Y(0) \mid T=1]}_{\text{ATT — what we wanted}} \\[0.6em]
+&\quad + \underbrace{\mathbb{E}[Y(0) \mid T=1] - \mathbb{E}[Y(0) \mid T=0]}_{\text{selection bias}}
 \end{aligned}
 $$
 
 The second term is how much the groups would have differed **with no treatment
-at all**. It is unobservable, because it is made of counterfactuals.
+at all**. It is unobservable, because it is made of counterfactuals. On the six
+people of @tbl-po the identity reads $34 = 14 + 20$: of the 34 the spreadsheet
+reports, 14 is college and 20 is who went.
+
+What the identity separates is two different comparisons — the one we want and
+the one the data offers (@fig-causation-association).
+
+::: {#fig-causation-association}
+{{< diagram causation-vs-association >}}
+
+**Causation** contrasts the whole population with itself under two regimes: no
+unit sits on only one side, and no dataset contains this comparison.
+**Association** contrasts the treated part with the untreated part: two
+different sets of units, and the comparison every dataset hands you for free.
+Selection bias is the distance between the two. Redrawn after @hernan2020.
+:::
 
 ::: {.recall}
 Naive difference = ATT + {{< term selection-bias >}}. Selection bias is not
@@ -244,7 +355,7 @@ fig
 
 The segments add up to exactly the naive difference. In the randomized design
 the second segment is degenerate — the coin knows nothing about the potential
-outcomes, so $E[Y(0) \mid T=1] = E[Y(0) \mid T=0]$.
+outcomes, so $\mathbb{E}[Y(0) \mid T=1] = \mathbb{E}[Y(0) \mid T=0]$.
 
 ::: {.quiz question="The sample grows from 4,000 to 400,000 observations. What happens to the bias in the second design?"}
 Nothing. Selection bias is a property of the **assignment mechanism**, not of

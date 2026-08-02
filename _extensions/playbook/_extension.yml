@@ -7,3 +7,4 @@ contributes:
     - playbook.lua
   shortcodes:
     - terms.lua
+    - diagram.lua

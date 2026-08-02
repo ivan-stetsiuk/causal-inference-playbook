@@ -6,7 +6,14 @@
 #   term  - how the term appears in prose by default
 #   short - hover tooltip (single line, no math)
 #   def   - full definition for the glossary page (markdown allowed)
+#   aka   - the same concept's name in other literatures, with whose name it is
+#   note  - a genuine disagreement between sources, where one exists
+#   src   - citation keys from references.bib
 #   see   - keys of related terms
+#
+# src is not decoration. This field is the rule that no definition here is
+# written from memory: every entry names the work it is taken from, and where
+# two standard works disagree, `note` says so rather than silently picking one.
 
 glossary:
   potential-outcomes:
@@ -17,6 +24,8 @@ glossary:
       without treatment, and $Y_i(1)$, what would happen with it. Exactly one
       is ever observed. The causal effect for that unit is $Y_i(1) - Y_i(0)$,
       and it is fundamentally unobservable.
+    aka: "counterfactual outcomes, written $Y^{a}$ rather than $Y(a)$, in Hernán and Robins"
+    src: [rubin1974, holland1986, imbens2015, hernan2020]
     see: [counterfactual, fundamental-problem, ate]
 
   counterfactual:
@@ -26,42 +35,61 @@ glossary:
       Whichever potential outcome did not happen. For a treated unit the
       counterfactual is $Y_i(0)$. All of causal inference reduces to finding
       something to stand in for the counterfactual.
+    src: [hernan2020, holland1986]
     see: [potential-outcomes, fundamental-problem]
 
   fundamental-problem:
     term: "fundamental problem of causal inference"
     short: "Both potential outcomes can never be observed for the same unit"
     def: |
-      Holland's formulation: a unit-level causal effect is unobservable
-      because only one half of the pair is ever visible. It follows that
-      causal inference is always a **missing data** problem, not a problem of
-      describing the data you have.
+      Holland's formulation, and his phrase: a unit-level causal effect is
+      unobservable because only one half of the pair is ever visible. It
+      follows that causal inference is always a **missing data** problem, not
+      a problem of describing the data you have.
+    src: [holland1986]
     see: [potential-outcomes, counterfactual]
 
   ate:
     term: "ATE"
     short: "Average Treatment Effect — the mean effect across the whole population"
     def: |
-      $ATE = E[Y(1) - Y(0)]$. The average causal effect over all units. It
-      answers "what happens if we treat everyone".
-    see: [att, cate, potential-outcomes]
+      $ATE = \mathbb{E}[Y(1) - Y(0)]$. The average causal effect over all
+      units. It answers "what happens if we treat everyone".
+    aka: "average causal effect in Hernán and Robins, who define it as a contrast of $\\mathbb{E}[Y^{a=1}]$ and $\\mathbb{E}[Y^{a=0}]$"
+    src: [hernan2020, imbens2015, rubin1974]
+    see: [att, atu, cate, potential-outcomes]
 
   att:
     term: "ATT"
     short: "The effect on those who actually received treatment"
     def: |
-      $ATT = E[Y(1) - Y(0) \mid T = 1]$. Diverges from {{< term ate >}} when
-      the effect is heterogeneous and the treated are not a random subset. In
-      practice ATT is usually what gets estimated, even though ATE is usually
-      what gets asked about.
-    see: [ate, cate]
+      $ATT = \mathbb{E}[Y(1) - Y(0) \mid T = 1]$. Diverges from
+      {{< term ate >}} when the effect is heterogeneous and the treated are
+      not a random subset. In practice ATT is usually what gets estimated,
+      even though ATE is usually what gets asked about.
+    aka: "ATET, or the effect of treatment on the treated, in the econometrics literature"
+    src: [angrist2009, imbens2015, facure2022]
+    see: [ate, atu, cate]
+
+  atu:
+    term: "ATU"
+    short: "The effect treatment would have had on those who did not receive it"
+    def: |
+      $ATU = \mathbb{E}[Y(1) - Y(0) \mid T = 0]$. Entirely counterfactual: it
+      is built from the outcome the untreated would have had under a treatment
+      none of them took. {{< term ate >}} is the size-weighted average of ATT
+      and ATU, so the three coincide only when the effect is homogeneous.
+    aka: "ATC, the effect on the controls"
+    src: [imbens2015, facure2022]
+    see: [ate, att]
 
   cate:
     term: "CATE"
     short: "Effect conditional on covariates: a function of x, not a number"
     def: |
-      $CATE(x) = E[Y(1) - Y(0) \mid X = x]$. What you need when the decision
-      is about a specific unit rather than about the population.
+      $CATE(x) = \mathbb{E}[Y(1) - Y(0) \mid X = x]$. What you need when the
+      decision is about a specific unit rather than about the population.
+    src: [imbens2015, facure2022]
     see: [ate, att]
 
   rct:
@@ -71,6 +99,7 @@ glossary:
       The gold standard. Randomization makes assignment independent of the
       potential outcomes, so a difference in means estimates {{< term ate >}}
       without bias and without any modeling assumptions.
+    src: [hernan2020, angrist2009]
     see: [ignorability, selection-bias]
 
   selection-bias:
@@ -78,9 +107,16 @@ glossary:
     short: "Outcome gap caused not by treatment but by who ended up in which group"
     def: |
       Decomposition of the naive difference in means:
-      $E[Y|T=1] - E[Y|T=0] = \underbrace{ATT}_{\text{effect}} + \underbrace{E[Y(0)|T=1] - E[Y(0)|T=0]}_{\text{selection bias}}$.
+      $\mathbb{E}[Y \mid T=1] - \mathbb{E}[Y \mid T=0] = \underbrace{ATT}_{\text{effect}} + \underbrace{\mathbb{E}[Y(0) \mid T=1] - \mathbb{E}[Y(0) \mid T=0]}_{\text{selection bias}}$.
       The second term is how much the groups would have differed **with no
       treatment at all**. Randomization sets it to zero by construction.
+    note: |
+      The name is not shared across fields. This decomposition and its label
+      are the econometric usage. Hernán and Robins reserve *selection bias*
+      for bias created by conditioning on a common effect — a collider, or
+      selection into the study — and call the term above **confounding**. When
+      reading across literatures, check which of the two is meant.
+    src: [angrist2009, facure2022, hernan2020]
     see: [confounder, rct, ignorability]
 
   confounder:
@@ -91,6 +127,7 @@ glossary:
       creates correlation between them in the total absence of a causal link.
       The crucial asymmetry: a confounder must be **controlled for**, while a
       collider must not be.
+    src: [hernan2020, pearl2009]
     see: [selection-bias, ignorability]
 
   ignorability:
@@ -101,6 +138,8 @@ glossary:
       good as randomly assigned. The assumption is untestable: data can
       neither confirm nor refute it, only subject-matter knowledge can argue
       for it.
+    aka: "conditional exchangeability in Hernán and Robins, unconfoundedness in Imbens and Rubin, the conditional independence assumption (CIA) in Angrist and Pischke"
+    src: [rubin1974, imbens2015, hernan2020, angrist2009]
     see: [confounder, rct, positivity]
 
   positivity:
@@ -110,14 +149,19 @@ glossary:
       $0 < P(T = 1 \mid X = x) < 1$ for all $x$. If at some $x$ everyone is
       treated or nobody is, there is no counterfactual available there, and
       no method can repair that.
+    aka: "overlap, or common support, in the econometrics literature"
+    src: [hernan2020, imbens2015]
     see: [ignorability]
 
   sutva:
     term: "SUTVA"
     short: "No interference between units, and one well-defined version of treatment"
     def: |
-      Two requirements at once: (1) a unit's outcome does not depend on the
-      treatment assigned to other units; (2) the treatment exists in a single
-      version. Violated by network effects, marketplaces, and anything where
-      units compete for a shared resource.
+      Rubin's term, from his 1980 comment. Two requirements at once: (1) a
+      unit's outcome does not depend on the treatment assigned to other units;
+      (2) the treatment exists in a single version. Violated by network
+      effects, marketplaces, and anything where units compete for a shared
+      resource.
+    aka: "split by Hernán and Robins into *no interference* and *consistency* (a well-defined intervention), which they treat as separate conditions"
+    src: [rubin1980, imbens2015, hernan2020]
     see: [potential-outcomes]

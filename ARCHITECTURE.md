@@ -239,6 +239,12 @@ disagree, a `note` field says so instead of quietly picking a side; the
 `selection-bias` entry is the working example, since Hernán and Robins use that
 name for something the econometrics literature calls confounding.
 
+Locators are checked, not guessed. A section or figure number is only written
+down after being opened in the source — anything else produces a reference the
+reader cannot follow and cannot tell is wrong. Where the edition consulted may
+differ from the one cited, `references.bib` records which (see the note on
+`hernan2020`).
+
 ---
 
 ## 6. Design system (Goal 2)

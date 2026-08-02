@@ -36,9 +36,10 @@ Everyone already distinguishes *association* from *causation*. Stated that way
 the distinction is intuitive and useless: it cannot be computed, argued with,
 or checked against data.
 
-This chapter makes both precise. **Association** turns out to be a statement
-about two *different groups* of units; **causation**, a statement about *one
-group* under two different treatments. Once they are written down, they are
+This chapter makes both precise, following @hernan2020 [§1.5]. **Association**
+is a statement about two *disjoint subsets* of the population, split by the
+treatment each unit actually received; **causation** is a statement about *the
+same population* under two different treatment values. Written down, they are
 visibly different quantities — and only one of the two can be computed from
 data.
 
@@ -241,7 +242,9 @@ the one the data offers (@fig-causation-association).
 unit sits on only one side, and no dataset contains this comparison.
 **Association** contrasts the treated part with the untreated part: two
 different sets of units, and the comparison every dataset hands you for free.
-Selection bias is the distance between the two. Redrawn after @hernan2020.
+Selection bias is the distance between the two. Redrawn after @hernan2020
+[fig. 1.1], recoloured to this site's palette and relabelled in the $T$, $Y(t)$
+notation used here.
 :::
 
 ::: {.recall}

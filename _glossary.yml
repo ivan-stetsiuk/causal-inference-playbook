@@ -114,8 +114,9 @@ glossary:
       The name is not shared across fields. This decomposition and its label
       are the econometric usage. Hernán and Robins reserve *selection bias*
       for bias created by conditioning on a common effect — a collider, or
-      selection into the study — and call the term above **confounding**. When
-      reading across literatures, check which of the two is meant.
+      selection into the study — and give it its own chapter (ch. 8), separate
+      from **confounding** (ch. 7), which is what they call the term above.
+      When reading across literatures, check which of the two is meant.
     src: [angrist2009, facure2022, hernan2020]
     see: [confounder, rct, ignorability]
 
@@ -138,7 +139,7 @@ glossary:
       good as randomly assigned. The assumption is untestable: data can
       neither confirm nor refute it, only subject-matter knowledge can argue
       for it.
-    aka: "conditional exchangeability in Hernán and Robins, unconfoundedness in Imbens and Rubin, the conditional independence assumption (CIA) in Angrist and Pischke"
+    aka: "conditional exchangeability in Hernán and Robins (§3.2, where it sits beside positivity in §3.3 and consistency in §3.4 as one of three identifiability conditions), unconfoundedness in Imbens and Rubin, the conditional independence assumption (CIA) in Angrist and Pischke"
     src: [rubin1974, imbens2015, hernan2020, angrist2009]
     see: [confounder, rct, positivity]
 
@@ -162,6 +163,6 @@ glossary:
       (2) the treatment exists in a single version. Violated by network
       effects, marketplaces, and anything where units compete for a shared
       resource.
-    aka: "split by Hernán and Robins into *no interference* and *consistency* (a well-defined intervention), which they treat as separate conditions"
+    aka: "split by Hernán and Robins into *no interference* (Fine Point 1.1) and *consistency* (§3.4–3.5), which they treat as separate conditions rather than one acronym"
     src: [rubin1980, imbens2015, hernan2020]
     see: [potential-outcomes]

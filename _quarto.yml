@@ -8,8 +8,14 @@ project:
     - "**/*.qmd"
   # palette.json -> tokens.css / tokens.js / _scripts.html / _tokens-*.scss.
   # Runs before every render, so site colors, Plotly and OJS cannot drift.
+  #
+  # invalidate_freeze.py drops the cache of any page whose *data* inputs moved.
+  # Quarto keys the freeze on document source alone, so editing _glossary.yml
+  # would otherwise leave glossary.qmd looking unchanged and publish stale
+  # definitions.
   pre-render:
     - python3 scripts/build_tokens.py
+    - python3 scripts/invalidate_freeze.py
   # Anki deck is rebuilt from the .qmd sources after the site is written.
   post-render:
     - python3 scripts/export_anki.py

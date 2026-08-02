@@ -131,6 +131,7 @@ causal-inference-playbook/
 ├── _extensions/playbook/        # Lua filters, {{< term >}} and {{< diagram >}}
 ├── scripts/
 │   ├── build_tokens.py          # palette.json -> all generated theme files
+│   ├── invalidate_freeze.py     # drops freeze caches whose data inputs moved
 │   ├── recall_parser.py         # extracts .recall / .quiz from .qmd sources
 │   └── export_anki.py           # cards -> TSV for Anki
 │
@@ -289,6 +290,24 @@ output. Deploys take seconds and cannot break because a package version moved.
 
 The trade-off: rendering must happen locally before pushing, or cell changes
 never reach the site. A pre-commit hook catches this.
+
+### Freeze keys and data files
+
+Quarto keys a document's freeze on the document source. That is correct for a
+chapter and wrong for a page whose cells read a data file: `glossary.qmd` is
+byte-identical after an edit to `_glossary.yml`, so the cache is reused and the
+corrected definitions never appear. This is a *silent* failure — the build
+stays green and the page stays wrong — and it did happen here.
+
+`scripts/invalidate_freeze.py` closes it. It hashes each page's declared data
+inputs (`glossary.qmd` ← `_glossary.yml`; `recall.qmd` ← every chapter source),
+stores the hash in `_freeze/.data-deps/`, and removes the freeze directory when
+the hash moves. Content hashing, not mtimes — a fresh clone rewrites every
+mtime and would invalidate the whole cache on the first CI run.
+
+Under `CI` the script refuses to invalidate and fails the build instead:
+re-executing needs packages CI deliberately does not install, so the only
+correct outcome is a loud "render locally and commit `_freeze/`".
 
 ---
 

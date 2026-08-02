@@ -53,7 +53,7 @@ glossary:
     term: "ATE"
     short: "Average Treatment Effect — the mean effect across the whole population"
     def: |
-      $ATE = \mathbb{E}[Y(1) - Y(0)]$. The average causal effect over all
+      $\text{ATE} = \mathbb{E}[Y(1) - Y(0)]$. The average causal effect over all
       units. It answers "what happens if we treat everyone".
     aka: "average causal effect in Hernán and Robins, who define it as a contrast of $\\mathbb{E}[Y^{a=1}]$ and $\\mathbb{E}[Y^{a=0}]$"
     src: [hernan2020, imbens2015, rubin1974]
@@ -63,7 +63,7 @@ glossary:
     term: "ATT"
     short: "The effect on those who actually received treatment"
     def: |
-      $ATT = \mathbb{E}[Y(1) - Y(0) \mid T = 1]$. Diverges from
+      $\text{ATT} = \mathbb{E}[Y(1) - Y(0) \mid T = 1]$. Diverges from
       {{< term ate >}} when the effect is heterogeneous and the treated are
       not a random subset. In practice ATT is usually what gets estimated,
       even though ATE is usually what gets asked about.
@@ -75,7 +75,7 @@ glossary:
     term: "ATU"
     short: "The effect treatment would have had on those who did not receive it"
     def: |
-      $ATU = \mathbb{E}[Y(1) - Y(0) \mid T = 0]$. Entirely counterfactual: it
+      $\text{ATU} = \mathbb{E}[Y(1) - Y(0) \mid T = 0]$. Entirely counterfactual: it
       is built from the outcome the untreated would have had under a treatment
       none of them took. {{< term ate >}} is the size-weighted average of ATT
       and ATU, so the three coincide only when the effect is homogeneous.
@@ -87,7 +87,7 @@ glossary:
     term: "CATE"
     short: "Effect conditional on covariates: a function of x, not a number"
     def: |
-      $CATE(x) = \mathbb{E}[Y(1) - Y(0) \mid X = x]$. What you need when the
+      $\text{CATE}(x) = \mathbb{E}[Y(1) - Y(0) \mid X = x]$. What you need when the
       decision is about a specific unit rather than about the population.
     src: [imbens2015, facure2022]
     see: [ate, att]
@@ -107,7 +107,7 @@ glossary:
     short: "Outcome gap caused not by treatment but by who ended up in which group"
     def: |
       Decomposition of the naive difference in means:
-      $\mathbb{E}[Y \mid T=1] - \mathbb{E}[Y \mid T=0] = \underbrace{ATT}_{\text{effect}} + \underbrace{\mathbb{E}[Y(0) \mid T=1] - \mathbb{E}[Y(0) \mid T=0]}_{\text{selection bias}}$.
+      $\mathbb{E}[Y \mid T=1] - \mathbb{E}[Y \mid T=0] = \underbrace{\text{ATT}}_{\text{effect}} + \underbrace{\mathbb{E}[Y(0) \mid T=1] - \mathbb{E}[Y(0) \mid T=0]}_{\text{selection bias}}$.
       The second term is how much the groups would have differed **with no
       treatment at all**. Randomization sets it to zero by construction.
     note: |
